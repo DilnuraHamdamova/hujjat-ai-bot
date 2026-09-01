@@ -54,6 +54,7 @@ async def create_resume(
                 (
                     "awaiting_photo",
                     "collecting",
+                    "confirming_list",
                     "editing",
                     "review",
                     "adding_section_title",
@@ -88,6 +89,7 @@ async def get_current_resume(session: AsyncSession, user_id: UUID) -> ResumeDraf
                 (
                     "awaiting_photo",
                     "collecting",
+                    "confirming_list",
                     "editing",
                     "review",
                     "adding_section_title",
@@ -122,6 +124,43 @@ async def save_answer(
     else:
         draft.current_step = next_step_key
 
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def append_list_answer(
+    session: AsyncSession, draft: ResumeDraft, *, key: str, values: list[str]
+) -> ResumeDraft:
+    data = dict(draft.data)
+    current = data.get(key, [])
+    items = list(current) if isinstance(current, list) else []
+    items.extend(values)
+    data[key] = items
+    draft.data = data
+    draft.status = "confirming_list"
+    draft.current_step = key
+    draft.version += 1
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def continue_after_list(
+    session: AsyncSession, draft: ResumeDraft, next_step_key: str | None
+) -> ResumeDraft:
+    if next_step_key is None:
+        draft.status = "review"
+    else:
+        draft.status = "collecting"
+        draft.current_step = next_step_key
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def reopen_list_step(session: AsyncSession, draft: ResumeDraft) -> ResumeDraft:
+    draft.status = "collecting"
     await session.commit()
     await session.refresh(draft)
     return draft

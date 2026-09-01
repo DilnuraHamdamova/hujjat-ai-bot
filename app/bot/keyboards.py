@@ -56,6 +56,22 @@ def output_format_keyboard() -> InlineKeyboardMarkup:
     )
 
 
+def add_more_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    labels: dict[Language, tuple[str, str]] = {
+        "uz": ("➕ Yana qo‘shish", "✅ Davom etish"),
+        "en": ("➕ Add another", "✅ Continue"),
+        "ru": ("➕ Добавить ещё", "✅ Продолжить"),
+    }
+    add_label, continue_label = labels[locale]
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=add_label, callback_data="list:add")],
+            [InlineKeyboardButton(text=continue_label, callback_data="list:done")],
+        ]
+    )
+
+
 def start_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
     locale = normalize_language(language)
     labels: dict[Language, tuple[str, str]] = {

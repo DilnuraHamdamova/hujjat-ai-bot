@@ -10,6 +10,7 @@ from aiogram.types import User as TelegramUser
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.keyboards import (
+    add_more_keyboard,
     cv_template_keyboard,
     delete_confirmation_keyboard,
     document_type_keyboard,
@@ -24,6 +25,8 @@ from app.core.config import get_settings
 from app.db.models import User
 from app.documents.generator import DocumentGenerator
 from app.repositories.resumes import (
+    append_list_answer,
+    continue_after_list,
     create_resume,
     delete_user_data,
     get_current_resume,
@@ -31,6 +34,7 @@ from app.repositories.resumes import (
     get_user_document_paths,
     mark_completed,
     remove_section,
+    reopen_list_step,
     save_answer,
     save_custom_section_content,
     save_custom_section_title,
@@ -308,11 +312,21 @@ async def collect_text(message: Message, session: AsyncSession) -> None:
     was_editing = draft.status == "editing"
     document_type = str(draft.data.get("document_type", "cv"))
     following_step = None if was_editing else next_step(step.key, document_type)
+    parsed_value = parse_answer(step, message.text)
+
+    if step.is_list and not was_editing and isinstance(parsed_value, list) and parsed_value:
+        await append_list_answer(session, draft, key=step.key, values=parsed_value)
+        await message.answer(
+            text("add_more_question", user.language_code),
+            reply_markup=add_more_keyboard(user.language_code),
+        )
+        return
+
     draft = await save_answer(
         session,
         draft,
         key=step.key,
-        value=parse_answer(step, message.text),
+        value=parsed_value,
         next_step_key=following_step.key if following_step else None,
     )
 
@@ -320,6 +334,43 @@ async def collect_text(message: Message, session: AsyncSession) -> None:
         await _send_preview(message, draft.data, user.language_code)
     elif following_step:
         await message.answer(step_prompt(following_step.key, user.language_code))
+
+
+@router.callback_query(F.data == "list:add")
+async def add_list_item_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    user = await _user(session, callback.from_user)
+    draft = await get_current_resume(session, user.id)
+    if draft is None or draft.status != "confirming_list":
+        await callback.answer(text("broken_state", user.language_code), show_alert=True)
+        return
+    step = STEP_BY_KEY.get(draft.current_step)
+    if step is None:
+        await callback.answer(text("broken_state", user.language_code), show_alert=True)
+        return
+    await reopen_list_step(session, draft)
+    await callback.answer()
+    if callback.message:
+        await callback.message.answer(step_prompt(step.key, user.language_code))
+
+
+@router.callback_query(F.data == "list:done")
+async def finish_list_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    user = await _user(session, callback.from_user)
+    draft = await get_current_resume(session, user.id)
+    if draft is None or draft.status != "confirming_list":
+        await callback.answer(text("broken_state", user.language_code), show_alert=True)
+        return
+    document_type = str(draft.data.get("document_type", "cv"))
+    following_step = next_step(draft.current_step, document_type)
+    draft = await continue_after_list(
+        session, draft, following_step.key if following_step else None
+    )
+    await callback.answer()
+    if isinstance(callback.message, Message):
+        if following_step:
+            await callback.message.answer(step_prompt(following_step.key, user.language_code))
+        else:
+            await _send_preview(callback.message, draft.data, user.language_code)
 
 
 @router.callback_query(F.data == "section:add")

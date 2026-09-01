@@ -101,6 +101,11 @@ TEXTS: dict[str, dict[Language, str]] = {
         "en": "Which format should the document use?",
         "ru": "В каком формате подготовить документ?",
     },
+    "add_more_question": {
+        "uz": "✅ Saqlandi. Yana qo‘shasizmi?",
+        "en": "✅ Saved. Would you like to add another?",
+        "ru": "✅ Сохранено. Добавить ещё?",
+    },
     "help": {
         "uz": (
             "<b>Buyruqlar</b>\n/start — asosiy menyu\n/new — yangi hujjat\n"
@@ -258,27 +263,24 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Напишите краткое профессиональное описание:",
     },
     "skills": {
-        "uz": "Ko‘nikmalaringizni vergul bilan ajratib yozing:",
-        "en": "List your skills separated by commas:",
-        "ru": "Перечислите навыки через запятую:",
+        "uz": "Bitta ko‘nikmangizni kiriting:",
+        "en": "Enter one skill:",
+        "ru": "Введите один навык:",
     },
     "experience": {
-        "uz": (
-            "Ish tajribangizni yozing. Har bir ish joyini yangi qatordan kiriting. "
-            "Tajriba bo‘lmasa '-' yuboring:"
-        ),
-        "en": "Enter your work experience, one job per line. Send '-' if you have none:",
-        "ru": "Укажите опыт работы, каждое место с новой строки. Если опыта нет, отправьте '-':",
+        "uz": "Bitta ish joyi va tajribangizni kiriting. Tajriba bo‘lmasa '-' yuboring:",
+        "en": "Enter one workplace and experience entry. Send '-' if you have none:",
+        "ru": "Введите одно место работы и опыт. Если опыта нет, отправьте '-':",
     },
     "education": {
-        "uz": "Ta’lim ma’lumotlaringizni yozing. Har birini yangi qatordan kiriting:",
-        "en": "Enter your education, one item per line:",
-        "ru": "Укажите образование, каждый пункт с новой строки:",
+        "uz": "Bitta ta’lim ma’lumotingizni kiriting:",
+        "en": "Enter one education entry:",
+        "ru": "Введите одну запись об образовании:",
     },
     "languages": {
-        "uz": "Tillar va darajalarni kiriting (masalan: O‘zbek — ona tili, Ingliz — B2):",
-        "en": "Enter languages and proficiency levels (for example: English — C1):",
-        "ru": "Укажите языки и уровни владения (например: Русский — родной, Английский — B2):",
+        "uz": "Bitta til va darajasini kiriting (masalan: Ingliz — B2):",
+        "en": "Enter one language and proficiency level (for example: English — C1):",
+        "ru": "Введите один язык и уровень владения (например: Английский — B2):",
     },
     "objective_full_name": {
         "uz": "Familiya, ism va otangizning ismini to‘liq kiriting:",
@@ -316,12 +318,9 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Укажите уровень образования (например: высшее):",
     },
     "objective_graduated": {
-        "uz": (
-            "Tamomlagan ta’lim muassasalaringizni yil bilan yozing, "
-            "har birini yangi qatordan kiriting:"
-        ),
-        "en": "List graduated institutions with years, one per line:",
-        "ru": "Перечислите оконченные учебные заведения с годами, каждое с новой строки:",
+        "uz": "Bitta tamomlagan ta’lim muassasangizni yili bilan kiriting:",
+        "en": "Enter one graduated institution with the year:",
+        "ru": "Введите одно оконченное учебное заведение и год:",
     },
     "objective_specialty": {
         "uz": "Ma’lumotingiz bo‘yicha mutaxassisligingizni kiriting:",
@@ -339,9 +338,9 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Укажите учёное звание. Если нет, отправьте '-':",
     },
     "objective_languages": {
-        "uz": "Qaysi chet tillarini bilishingizni yozing:",
-        "en": "List the foreign languages you know:",
-        "ru": "Укажите иностранные языки, которыми владеете:",
+        "uz": "Bitta biladigan chet tilingizni kiriting:",
+        "en": "Enter one foreign language you know:",
+        "ru": "Введите один иностранный язык, которым владеете:",
     },
     "objective_awards": {
         "uz": "Davlat mukofotlaringizni kiriting. Bo‘lmasa '-' yuboring:",
@@ -354,21 +353,21 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Укажите членство в выборных органах. Если нет, отправьте '-':",
     },
     "objective_employment": {
-        "uz": "Mehnat faoliyatingizni yozing. Har bir davrni yangi qatordan kiriting:",
-        "en": "Enter your employment history, one period per line:",
-        "ru": "Укажите трудовую деятельность, каждый период с новой строки:",
+        "uz": "Mehnat faoliyatingizdagi bitta davrni kiriting:",
+        "en": "Enter one period from your employment history:",
+        "ru": "Введите один период трудовой деятельности:",
     },
     "objective_relatives": {
         "uz": (
-            "Yaqin qarindoshlaringizni har birini yangi qatordan quyidagicha yozing:\n"
+            "Bitta yaqin qarindoshingizni quyidagicha yozing:\n"
             "Qarindoshligi | F.I.Sh. | tug‘ilgan yili va joyi | ish joyi va lavozimi | manzili"
         ),
         "en": (
-            "Enter each close relative on a new line in this format:\n"
+            "Enter one close relative in this format:\n"
             "Relationship | Full name | birth year and place | workplace and position | address"
         ),
         "ru": (
-            "Укажите каждого близкого родственника с новой строки в формате:\n"
+            "Укажите одного близкого родственника в формате:\n"
             "Родство | Ф.И.О. | год и место рождения | место работы и должность | адрес"
         ),
     },

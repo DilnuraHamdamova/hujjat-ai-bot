@@ -78,8 +78,8 @@ def parse_answer(step: Step, text: str) -> str | list[str]:
     if step.optional and clean == "-":
         return [] if step.is_list else ""
     if step.is_list:
-        separator = "\n" if "\n" in clean else ","
-        return [part.strip(" •-") for part in clean.split(separator) if part.strip(" •-")]
+        item = clean.strip(" •-")
+        return [item] if item else []
     return clean
 
 

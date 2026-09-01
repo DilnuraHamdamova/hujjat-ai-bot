@@ -17,15 +17,11 @@ def test_steps_have_a_complete_sequence() -> None:
     assert next_step(OBJECTIVE_STEPS[-1].key, "objective") is None
 
 
-def test_list_answers_support_commas_and_lines() -> None:
+def test_list_answers_are_collected_one_item_at_a_time() -> None:
     skills_step = next(step for step in STEPS if step.key == "skills")
     experience_step = next(step for step in STEPS if step.key == "experience")
-    assert parse_answer(skills_step, "Python, FastAPI, PostgreSQL") == [
-        "Python",
-        "FastAPI",
-        "PostgreSQL",
-    ]
-    assert parse_answer(experience_step, "Company A\nCompany B") == ["Company A", "Company B"]
+    assert parse_answer(skills_step, "Python") == ["Python"]
+    assert parse_answer(experience_step, "Example LLC, 2022–2025") == ["Example LLC, 2022–2025"]
     assert parse_answer(experience_step, "-") == []
 
 
