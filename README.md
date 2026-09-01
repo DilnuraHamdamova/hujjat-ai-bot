@@ -1,21 +1,31 @@
-# CV Telegram Bot
+# HujjatAI Telegram Bot
 
-Matn orqali foydalanuvchidan ma’lumot yig‘ib, ATS-friendly PDF va DOCX CV yaratadigan
-Telegram bot. OpenAI integratsiyasi keyingi bosqich uchun ajratilgan, ammo hozirgi MVP
-OpenAI API key’siz to‘liq ishlaydi.
+Foydalanuvchidan ma’lumot yig‘ib, PDF yoki DOCX formatida professional CV va
+obyektivka yaratadigan uch tilli Telegram bot. OpenAI integratsiyasi keyingi bosqich
+uchun ajratilgan; hozirgi versiya OpenAI API key’siz ishlaydi.
 
 ## Hozir ishlaydigan imkoniyatlar
 
 - Telegram polling (local/dev) va webhook (PROD)
-- Ketma-ket matnli savol-javob
+- O‘zbek, ingliz va rus tillari
+- CV, obyektivka, tavsiyanoma va portfolio tanlov menyusi
+- Classic, Modern va Europass uslubidagi CV shablonlari
+- Majburiy 3×4 rasm va qarindoshlar jadvali bilan obyektivka
+- Takrorlanuvchi ma’lumotlar uchun “Yana qo‘shish” oqimi
+- Istalgan bo‘limni qo‘shish va keraksiz bo‘limni olib tashlash
 - Telefon va email validatsiyasi
-- PostgreSQL’da user va versionlangan CV draft
+- PostgreSQL’da foydalanuvchi va versionlangan hujjat drafti
 - Preview, maydonlarni tahrirlash va tasdiqlash
-- Bitta canonical JSON’dan PDF va DOCX
+- PDF yoki Word formatidan faqat bittasini tanlash
+- Bitta canonical JSON’dan hujjat yaratish
 - Redis + Celery background-worker infratuzilmasi
 - Webhook secret va takroriy update himoyasi
 - `/delete_me` orqali DB va yaratilgan hujjatlarni o‘chirish
 - Docker Compose, healthcheck va Alembic migration
+
+Tavsiyanoma va portfolio tugmalari menyuda mavjud, lekin hozircha “tez orada”
+holatida. Tavsiyanoma AI orqali, portfolio esa keyingi Netlify integratsiyasi orqali
+ishlaydi.
 
 ## Arxitektura
 
@@ -25,8 +35,8 @@ Telegram
    ▼
 FastAPI + aiogram ─── PostgreSQL
    │
-   ├── Jinja2 + WeasyPrint ── PDF
-   ├── python-docx ────────── DOCX
+   ├── Jinja2 + WeasyPrint ── CV/obyektivka PDF
+   ├── python-docx ────────── CV/obyektivka DOCX
    └── Redis + Celery ─────── kelajakdagi audio/AI tasklar
 ```
 
@@ -115,10 +125,12 @@ secret va database internetga ochilmaydi.
 
 ## OpenAI keyin qanday ulanadi?
 
-`app/services/ai.py` ichidagi `AIProvider` contract o‘zgarmaydi. Keyinchalik
+`app/services/ai.py` ichidagi `AIProvider` contract o‘zgarmaydi. Keyingi bosqichda
 `OpenAIProvider` qo‘shilib:
 
 - `transcribe()` — Telegram voice’ni matnga aylantiradi;
-- `extract_resume()` — erkin matndan strukturali `ResumeData` oladi.
+- `extract_resume()` — bitta erkin matndan strukturali ma’lumot oladi;
+- yetishmagan majburiy maydonlarni aniqlab, foydalanuvchidan so‘raydi;
+- foydalanuvchi mazmunidan tavsiyanoma yaratadi.
 
 Bot handlerlari va hujjat generatorini qayta yozish talab qilinmaydi.

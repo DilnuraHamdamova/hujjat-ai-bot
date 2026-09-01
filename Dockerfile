@@ -15,10 +15,14 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY pyproject.toml ./
+RUN mkdir -p app \
+    && touch app/__init__.py \
+    && pip install . \
+    && rm -rf app
+
 COPY app ./app
 COPY alembic.ini ./
 COPY migrations ./migrations
-RUN pip install .
 
 RUN useradd --create-home --uid 10001 appuser \
     && mkdir -p /app/storage \
