@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="uz">
+<html lang="{{ language }}">
 <head>
   <meta charset="utf-8">
   <style>
@@ -27,10 +27,13 @@
     </div>
   </header>
 
-  {% if resume.summary %}<h2>PROFIL</h2><p>{{ resume.summary }}</p>{% endif %}
-  {% if resume.skills %}<h2>KO‘NIKMALAR</h2><ul class="skills">{% for item in resume.skills %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-  {% if resume.experience %}<h2>ISH TAJRIBASI</h2><ul>{% for item in resume.experience %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-  {% if resume.education %}<h2>TA’LIM</h2><ul>{% for item in resume.education %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-  {% if resume.languages %}<h2>TILLAR</h2><ul>{% for item in resume.languages %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+  {% if resume.summary %}<h2>{{ labels.profile }}</h2><p>{{ resume.summary }}</p>{% endif %}
+  {% if resume.skills %}<h2>{{ labels.skills }}</h2><ul class="skills">{% for item in resume.skills %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+  {% if resume.experience %}<h2>{{ labels.experience }}</h2><ul>{% for item in resume.experience %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+  {% if resume.education %}<h2>{{ labels.education }}</h2><ul>{% for item in resume.education %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+  {% if resume.languages %}<h2>{{ labels.languages }}</h2><ul>{% for item in resume.languages %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+  {% for section in custom_sections %}
+    {% if section.title and section.content %}<h2>{{ section.title }}</h2><p>{{ section.content }}</p>{% endif %}
+  {% endfor %}
 </body>
 </html>

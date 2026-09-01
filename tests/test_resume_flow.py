@@ -1,4 +1,5 @@
 from app.services.resume_flow import (
+    OBJECTIVE_STEPS,
     STEPS,
     build_preview,
     next_step,
@@ -12,6 +13,8 @@ def test_steps_have_a_complete_sequence() -> None:
     assert STEPS[0].key == "full_name"
     assert next_step("full_name").key == "job_title"
     assert next_step("languages") is None
+    assert next_step("objective_full_name", "objective").key == "objective_position"
+    assert next_step(OBJECTIVE_STEPS[-1].key, "objective") is None
 
 
 def test_list_answers_support_commas_and_lines() -> None:
@@ -54,3 +57,16 @@ def test_preview_splits_on_section_boundaries() -> None:
         "first section\n\nsecond section",
         "third section",
     ]
+
+
+def test_preview_supports_objective_and_custom_sections() -> None:
+    preview = build_preview(
+        {
+            "document_type": "objective",
+            "objective_full_name": "Ali Valiyev",
+            "custom_sections": [{"title": "Sertifikatlar", "content": "IELTS 7.5"}],
+        }
+    )
+    assert "MA’LUMOTNOMA" in preview
+    assert "Ali Valiyev" in preview
+    assert "Sertifikatlar" in preview

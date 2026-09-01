@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="{{ language }}">
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #24323d; font: 10.5pt/1.45 "DejaVu Sans", Arial, sans-serif; }
+    header { color: white; background: #0f766e; padding: 24mm 20mm 14mm; }
+    h1 { font-size: 27pt; margin: 0 0 5px; }
+    .role { color: #ccfbf1; font-size: 14pt; }
+    .contact { margin-top: 10px; }
+    main { padding: 13mm 20mm 18mm; }
+    h2 { color: #0f766e; border-left: 4px solid #2dd4bf; font-size: 12pt; padding-left: 8px; margin: 16px 0 7px; }
+    p { margin: 0 0 8px; }
+    ul { margin: 0; padding-left: 18px; }
+    li { margin-bottom: 4px; }
+    .skills { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; list-style: none; }
+    .skills li { background: #ccfbf1; border-radius: 12px; padding: 4px 9px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>{{ resume.full_name or "CV" }}</h1>
+    {% if resume.job_title %}<div class="role">{{ resume.job_title }}</div>{% endif %}
+    <div class="contact">{{ [resume.phone, resume.email, resume.location] | select | join(" · ") }}</div>
+  </header>
+  <main>
+    {% if resume.summary %}<h2>{{ labels.profile }}</h2><p>{{ resume.summary }}</p>{% endif %}
+    {% if resume.skills %}<h2>{{ labels.skills }}</h2><ul class="skills">{% for item in resume.skills %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+    {% if resume.experience %}<h2>{{ labels.experience }}</h2><ul>{% for item in resume.experience %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+    {% if resume.education %}<h2>{{ labels.education }}</h2><ul>{% for item in resume.education %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+    {% if resume.languages %}<h2>{{ labels.languages }}</h2><ul>{% for item in resume.languages %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+    {% for section in custom_sections %}{% if section.title and section.content %}<h2>{{ section.title }}</h2><p>{{ section.content }}</p>{% endif %}{% endfor %}
+  </main>
+</body>
+</html>

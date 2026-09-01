@@ -27,23 +27,52 @@ async def get_or_create_user(
     else:
         user.username = username
         user.first_name = first_name
-        user.language_code = language_code or user.language_code
     await session.commit()
     await session.refresh(user)
     return user
 
 
-async def create_resume(session: AsyncSession, user_id: UUID) -> ResumeDraft:
+async def set_user_language(session: AsyncSession, user: User, language_code: str) -> User:
+    user.language_code = language_code
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+async def create_resume(
+    session: AsyncSession,
+    user_id: UUID,
+    *,
+    document_type: str = "cv",
+    template_code: str = "classic",
+    awaiting_photo: bool = False,
+) -> ResumeDraft:
     existing = await session.scalars(
         select(ResumeDraft).where(
             ResumeDraft.user_id == user_id,
-            ResumeDraft.status.in_(("collecting", "editing", "review")),
+            ResumeDraft.status.in_(
+                (
+                    "awaiting_photo",
+                    "collecting",
+                    "editing",
+                    "review",
+                    "adding_section_title",
+                    "adding_section_content",
+                )
+            ),
         )
     )
     for draft in existing:
         draft.status = "cancelled"
 
-    draft = ResumeDraft(user_id=user_id, status="collecting", current_step="full_name")
+    first_step = "objective_full_name" if document_type == "objective" else "full_name"
+    draft = ResumeDraft(
+        user_id=user_id,
+        status="awaiting_photo" if awaiting_photo else "collecting",
+        current_step=first_step,
+        template_code=template_code,
+        data={"document_type": document_type},
+    )
     session.add(draft)
     await session.commit()
     await session.refresh(draft)
@@ -55,7 +84,17 @@ async def get_current_resume(session: AsyncSession, user_id: UUID) -> ResumeDraf
         select(ResumeDraft)
         .where(
             ResumeDraft.user_id == user_id,
-            ResumeDraft.status.in_(("collecting", "editing", "review", "completed")),
+            ResumeDraft.status.in_(
+                (
+                    "awaiting_photo",
+                    "collecting",
+                    "editing",
+                    "review",
+                    "adding_section_title",
+                    "adding_section_content",
+                    "completed",
+                )
+            ),
         )
         .order_by(ResumeDraft.created_at.desc())
         .limit(1)
@@ -91,6 +130,75 @@ async def save_answer(
 async def set_editing_step(session: AsyncSession, draft: ResumeDraft, step_key: str) -> ResumeDraft:
     draft.status = "editing"
     draft.current_step = step_key
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def save_photo(session: AsyncSession, draft: ResumeDraft, photo_path: str) -> ResumeDraft:
+    data = dict(draft.data)
+    data["photo_path"] = photo_path
+    draft.data = data
+    draft.status = "collecting"
+    draft.current_step = "objective_full_name"
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def start_custom_section(session: AsyncSession, draft: ResumeDraft) -> ResumeDraft:
+    draft.status = "adding_section_title"
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def save_custom_section_title(
+    session: AsyncSession, draft: ResumeDraft, title: str
+) -> ResumeDraft:
+    data = dict(draft.data)
+    data["pending_section_title"] = title
+    draft.data = data
+    draft.status = "adding_section_content"
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def save_custom_section_content(
+    session: AsyncSession, draft: ResumeDraft, content: str
+) -> ResumeDraft:
+    data = dict(draft.data)
+    title = str(data.pop("pending_section_title", ""))
+    raw_sections = data.get("custom_sections", [])
+    sections = list(raw_sections) if isinstance(raw_sections, list) else []
+    sections.append({"title": title, "content": content})
+    data["custom_sections"] = sections
+    draft.data = data
+    draft.status = "review"
+    draft.version += 1
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def remove_section(
+    session: AsyncSession, draft: ResumeDraft, section_key: str
+) -> ResumeDraft:
+    data = dict(draft.data)
+    if section_key.startswith("custom_"):
+        raw_sections = data.get("custom_sections", [])
+        sections = list(raw_sections) if isinstance(raw_sections, list) else []
+        try:
+            sections.pop(int(section_key.removeprefix("custom_")))
+        except (ValueError, IndexError):
+            pass
+        data["custom_sections"] = sections
+    else:
+        data.pop(section_key, None)
+    draft.data = data
+    draft.status = "review"
+    draft.version += 1
     await session.commit()
     await session.refresh(draft)
     return draft

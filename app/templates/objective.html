@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="{{ language }}">
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: A4; margin: 14mm; }
+    @page relatives { size: A4 landscape; margin: 12mm; }
+    * { box-sizing: border-box; }
+    body { color: #111; font: 9.5pt/1.35 "DejaVu Sans", Arial, sans-serif; }
+    h1 { text-align: center; font-size: 16pt; margin: 0 0 12px; }
+    .identity { min-height: 42mm; position: relative; padding-right: 38mm; }
+    .identity h2 { text-align: center; font-size: 14pt; padding-top: 12mm; }
+    .photo { position: absolute; right: 0; top: 0; width: 30mm; height: 40mm; object-fit: cover; border: 1px solid #777; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { border: 1px solid #555; padding: 5px; vertical-align: top; }
+    .details td:first-child { width: 42%; font-weight: 700; }
+    h3 { text-align: center; font-size: 12pt; margin: 14px 0 7px; }
+    ul { margin: 0; padding-left: 18px; }
+    .relatives-page { page: relatives; break-before: page; }
+    .relatives { table-layout: fixed; font-size: 8.5pt; }
+    .relatives th:nth-child(1) { width: 11%; }
+    .relatives th:nth-child(2) { width: 20%; }
+    .relatives th:nth-child(3) { width: 18%; }
+    .relatives th:nth-child(4) { width: 25%; }
+    .relatives th:nth-child(5) { width: 26%; }
+  </style>
+</head>
+<body>
+  <h1>{{ labels.document_title }}</h1>
+  <section class="identity">
+    {% if photo_uri %}<img class="photo" src="{{ photo_uri }}">{% endif %}
+    <h2>{{ data.objective_full_name }}</h2>
+  </section>
+  <table class="details">
+    {% set fields = [
+      ('objective_position', 'position'), ('objective_birth_date', 'birth_date'),
+      ('objective_birth_place', 'birth_place'), ('objective_nationality', 'nationality'),
+      ('objective_party', 'party'), ('objective_education_level', 'education_level'),
+      ('objective_graduated', 'graduated'), ('objective_specialty', 'specialty'),
+      ('objective_degree', 'degree'), ('objective_title', 'academic_title'),
+      ('objective_languages', 'foreign_languages'), ('objective_awards', 'awards'),
+      ('objective_elected', 'elected')
+    ] %}
+    {% for key, label_key in fields if key in data %}
+      <tr><td>{{ labels[label_key] }}</td><td>{% if data[key] is sequence and data[key] is not string %}{% for item in data[key] %}{{ item }}{% if not loop.last %}<br>{% endif %}{% endfor %}{% else %}{{ data[key] }}{% endif %}</td></tr>
+    {% endfor %}
+  </table>
+  {% if data.objective_employment %}<h3>{{ labels.employment }}</h3><ul>{% for item in data.objective_employment %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+  {% for section in custom_sections %}{% if section.title and section.content %}<h3>{{ section.title }}</h3><p>{{ section.content }}</p>{% endif %}{% endfor %}
+  {% if relatives %}
+  <section class="relatives-page">
+    <h3>{{ labels.relatives }}</h3>
+    <table class="relatives">
+      <thead><tr><th>{{ labels.relationship }}</th><th>{{ labels.relative_name }}</th><th>{{ labels.relative_birth }}</th><th>{{ labels.relative_work }}</th><th>{{ labels.relative_address }}</th></tr></thead>
+      <tbody>{% for row in relatives %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+    </table>
+  </section>
+  {% endif %}
+</body>
+</html>
