@@ -7,6 +7,7 @@ from aiogram import Bot, F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, FSInputFile, Message
 from aiogram.types import User as TelegramUser
+from aiogram.utils.media_group import MediaGroupBuilder
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.keyboards import (
@@ -57,6 +58,7 @@ from app.services.resume_flow import (
 
 logger = logging.getLogger(__name__)
 router = Router(name="resume")
+TEMPLATE_PREVIEW_DIR = Path(__file__).resolve().parents[1] / "assets" / "template_previews"
 
 
 async def _user(session: AsyncSession, telegram_user: TelegramUser) -> User:
@@ -141,7 +143,24 @@ async def cv_type_callback(callback: CallbackQuery, session: AsyncSession) -> No
     user = await _user(session, callback.from_user)
     await callback.answer()
     if isinstance(callback.message, Message):
-        await callback.message.edit_text(
+        await callback.message.edit_text(text("template_gallery_intro", user.language_code))
+        previews = (
+            ("classic", "template_classic_caption"),
+            ("modern", "template_modern_caption"),
+            ("europass", "template_europass_caption"),
+        )
+        if all((TEMPLATE_PREVIEW_DIR / f"{code}.png").is_file() for code, _ in previews):
+            album = MediaGroupBuilder()
+            for code, caption_key in previews:
+                album.add_photo(
+                    media=FSInputFile(TEMPLATE_PREVIEW_DIR / f"{code}.png"),
+                    caption=text(caption_key, user.language_code),
+                )
+            # aiogram's builder and Message annotations differ on live-photo support.
+            await callback.message.answer_media_group(album.build())  # type: ignore[arg-type]
+        else:
+            logger.error("One or more CV template preview images are missing")
+        await callback.message.answer(
             text("choose_template", user.language_code),
             reply_markup=cv_template_keyboard(user.language_code),
         )

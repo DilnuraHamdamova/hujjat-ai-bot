@@ -1,3 +1,4 @@
+from pathlib import Path
 from uuid import uuid4
 from zipfile import ZipFile
 
@@ -31,6 +32,14 @@ def test_document_and_output_choices_are_available() -> None:
         "format:pdf",
         "format:docx",
     ]
+
+
+def test_template_preview_images_exist() -> None:
+    preview_dir = Path("app/assets/template_previews")
+    for template_code in ("classic", "modern", "europass"):
+        preview = preview_dir / f"{template_code}.png"
+        assert preview.is_file()
+        assert preview.stat().st_size > 10_000
 
 
 def test_bot_copy_uses_selected_language() -> None:

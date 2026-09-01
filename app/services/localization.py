@@ -42,6 +42,26 @@ TEXTS: dict[str, dict[Language, str]] = {
         "en": "Choose a resume template:",
         "ru": "Выберите шаблон резюме:",
     },
+    "template_gallery_intro": {
+        "uz": "Quyidagi shablon namunalarini ko‘rib, bittasini tanlang:",
+        "en": "Review the template previews below and choose one:",
+        "ru": "Посмотрите примеры шаблонов ниже и выберите один:",
+    },
+    "template_classic_caption": {
+        "uz": "1. Classic — sodda va rasmiy",
+        "en": "1. Classic — clean and formal",
+        "ru": "1. Classic — простой и официальный",
+    },
+    "template_modern_caption": {
+        "uz": "2. Modern — zamonaviy va rangli",
+        "en": "2. Modern — contemporary and colorful",
+        "ru": "2. Modern — современный и яркий",
+    },
+    "template_europass_caption": {
+        "uz": "3. Europass — Yevropa uslubida",
+        "en": "3. Europass — European-style layout",
+        "ru": "3. Europass — в европейском стиле",
+    },
     "coming_soon": {
         "uz": "Bu imkoniyat tez orada ishga tushadi.",
         "en": "This feature is coming soon.",
