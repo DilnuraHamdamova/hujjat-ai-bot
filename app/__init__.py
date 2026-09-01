@@ -1,0 +1,1 @@
+"""CV Telegram bot application."""
