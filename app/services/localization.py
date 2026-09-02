@@ -42,6 +42,11 @@ TEXTS: dict[str, dict[Language, str]] = {
         "en": "Choose a resume template:",
         "ru": "Выберите шаблон резюме:",
     },
+    "choose_europass_template": {
+        "uz": "Europass modelini tanlang:",
+        "en": "Choose a Europass design:",
+        "ru": "Выберите дизайн Europass:",
+    },
     "template_gallery_intro": {
         "uz": "CV ko‘rinishini tanlang. Tayyor hujjat aynan tanlagan modelingizda yaratiladi:",
         "en": "Choose a resume style. Your document will be generated in the selected design:",

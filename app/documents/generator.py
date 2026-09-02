@@ -93,14 +93,14 @@ class DocumentGenerator:
             photo = document.add_paragraph()
             photo.alignment = (
                 WD_ALIGN_PARAGRAPH.RIGHT
-                if template_code in ("modern", "europass")
+                if template_code == "modern" or template_code.startswith("europass")
                 else WD_ALIGN_PARAGRAPH.CENTER
             )
             photo.add_run().add_picture(str(photo_path), width=Inches(1.18), height=Inches(1.57))
 
         title_alignment = (
             WD_ALIGN_PARAGRAPH.LEFT
-            if template_code in ("modern", "europass")
+            if template_code == "modern" or template_code.startswith("europass")
             else WD_ALIGN_PARAGRAPH.CENTER
         )
         title = document.add_paragraph()
@@ -108,7 +108,7 @@ class DocumentGenerator:
         name_run = title.add_run(data.full_name or "CV")
         name_run.bold = True
         name_run.font.size = Pt(22)
-        if template_code == "europass":
+        if template_code.startswith("europass"):
             name_run.font.color.rgb = RGBColor(28, 83, 145)
         elif template_code == "modern":
             name_run.font.color.rgb = RGBColor(13, 148, 136)
@@ -177,6 +177,9 @@ class DocumentGenerator:
             "classic": "resume.html",
             "modern": "resume_modern.html",
             "europass": "resume_europass.html",
+            "europass_1": "resume_europass.html",
+            "europass_2": "resume_europass.html",
+            "europass_3": "resume_europass.html",
         }
         template_name = templates.get(template_code, "resume.html")
         photo_path = Path(str(raw_data.get("photo_path", "")))
@@ -187,6 +190,7 @@ class DocumentGenerator:
                 resume=data,
                 language=language,
                 labels=labels,
+                template_code=template_code,
                 custom_sections=raw_data.get("custom_sections", []),
                 photo_uri=photo_path.resolve().as_uri() if photo_path.is_file() else "",
             )

@@ -15,6 +15,7 @@ from app.bot.keyboards import (
     delete_confirmation_keyboard,
     document_type_keyboard,
     edit_fields_keyboard,
+    europass_template_keyboard,
     language_keyboard,
     output_format_keyboard,
     photo_navigation_keyboard,
@@ -169,7 +170,16 @@ async def template_callback(callback: CallbackQuery, session: AsyncSession) -> N
     if callback.data is None:
         return
     template_code = callback.data.rsplit(":", 1)[-1]
-    if template_code not in ("classic", "modern", "europass"):
+    if template_code == "europass":
+        user = await _user(session, callback.from_user)
+        await callback.answer()
+        if isinstance(callback.message, Message):
+            await callback.message.edit_text(
+                text("choose_europass_template", user.language_code),
+                reply_markup=europass_template_keyboard(user.language_code),
+            )
+        return
+    if template_code not in ("classic", "modern", "europass_1", "europass_2", "europass_3"):
         return
     user = await _user(session, callback.from_user)
     await create_resume(

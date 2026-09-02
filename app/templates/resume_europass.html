@@ -6,6 +6,13 @@
     @page { size: A4; margin: 0; }
     * { box-sizing: border-box; }
     body { margin: 0; color: #283747; font: 10pt/1.45 "DejaVu Sans", Arial, sans-serif; }
+    body.variant-2 aside { background: #f1f3f5; color: #283747; }
+    body.variant-2 h2 { color: #164f86; }
+    body.variant-3 .page { display: block; }
+    body.variant-3 aside { color: #283747; background: #fff; border-bottom: 4px solid #164f86; padding: 12mm 15mm 8mm; }
+    body.variant-3 aside .photo { float: right; margin: 0; }
+    body.variant-3 aside h1 { display: inline-block; margin-top: 8mm; }
+    body.variant-3 main { padding: 10mm 15mm; }
     .page { display: grid; grid-template-columns: 31% 69%; min-height: 297mm; }
     aside { color: white; background: #164f86; padding: 22mm 11mm; }
     aside h1 { font-size: 22pt; line-height: 1.15; margin: 0 0 8px; }
@@ -19,7 +26,7 @@
     li { margin-bottom: 5px; }
   </style>
 </head>
-<body>
+<body class="{% if template_code == 'europass_2' %}variant-2{% elif template_code == 'europass_3' %}variant-3{% endif %}">
   <div class="page">
     <aside>
       {% if photo_uri %}<img class="photo" src="{{ photo_uri }}">{% endif %}

@@ -47,6 +47,23 @@ def cv_template_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
     )
 
 
+def europass_template_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    labels = {
+        "uz": ("Europass 1", "Europass 2", "Europass 3", "⬅️ Shablonlarga qaytish"),
+        "en": ("Europass 1", "Europass 2", "Europass 3", "⬅️ Back to templates"),
+        "ru": ("Europass 1", "Europass 2", "Europass 3", "⬅️ К шаблонам"),
+    }[locale]
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=f"🔗 {labels[0]}", callback_data="template:europass_1")],
+            [InlineKeyboardButton(text=f"🔗 {labels[1]}", callback_data="template:europass_2")],
+            [InlineKeyboardButton(text=f"🔗 {labels[2]}", callback_data="template:europass_3")],
+            [InlineKeyboardButton(text=labels[3], callback_data="document:cv")],
+        ]
+    )
+
+
 def output_format_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
