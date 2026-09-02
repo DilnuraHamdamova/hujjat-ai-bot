@@ -81,6 +81,20 @@ TEXTS: dict[str, dict[Language, str]] = {
             "Фотография для объективки обязательна."
         ),
     },
+    "send_cv_photo": {
+        "uz": (
+            "CV uchun yuzingiz aniq ko‘rinadigan professional rasm yuboring. "
+            "Rasm barcha shablonlarda ko‘rsatiladi va uni qo‘shish majburiy."
+        ),
+        "en": (
+            "Send a clear professional portrait for your resume. "
+            "The photo is required and will appear in every template."
+        ),
+        "ru": (
+            "Отправьте чёткую профессиональную фотографию для резюме. "
+            "Фото обязательно и будет показано во всех шаблонах."
+        ),
+    },
     "photo_saved": {
         "uz": "✅ Rasm saqlandi.",
         "en": "✅ Photo saved.",
@@ -125,6 +139,13 @@ TEXTS: dict[str, dict[Language, str]] = {
         "uz": "✅ Saqlandi. Yana qo‘shasizmi?",
         "en": "✅ Saved. Would you like to add another?",
         "ru": "✅ Сохранено. Добавить ещё?",
+    },
+    "old_button": {
+        "uz": "Bu tugma eski savolga tegishli. Eng oxirgi xabardagi tugmalardan foydalaning.",
+        "en": "This button belongs to an older question. Use the buttons in the latest message.",
+        "ru": (
+            "Эта кнопка относится к предыдущему вопросу. Используйте кнопки в последнем сообщении."
+        ),
     },
     "help": {
         "uz": (

@@ -79,6 +79,12 @@ class DocumentGenerator:
         styles["Normal"].font.name = "Arial"
         styles["Normal"].font.size = Pt(10)
 
+        photo_path = Path(str(raw_data.get("photo_path", "")))
+        if photo_path.is_file():
+            photo = document.add_paragraph()
+            photo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            photo.add_run().add_picture(str(photo_path), width=Inches(1.18), height=Inches(1.57))
+
         title = document.add_paragraph()
         title.alignment = WD_ALIGN_PARAGRAPH.CENTER
         name_run = title.add_run(data.full_name or "CV")
@@ -155,6 +161,7 @@ class DocumentGenerator:
             "europass": "resume_europass.html",
         }
         template_name = templates.get(template_code, "resume.html")
+        photo_path = Path(str(raw_data.get("photo_path", "")))
         html = (
             self._environment()
             .get_template(template_name)
@@ -163,6 +170,7 @@ class DocumentGenerator:
                 language=language,
                 labels=labels,
                 custom_sections=raw_data.get("custom_sections", []),
+                photo_uri=photo_path.resolve().as_uri() if photo_path.is_file() else "",
             )
         )
         HTML(string=html, base_url=str(self.template_dir)).write_pdf(path)

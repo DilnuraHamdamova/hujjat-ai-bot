@@ -6,6 +6,7 @@ from app.bot.keyboards import (
     document_type_keyboard,
     language_keyboard,
     output_format_keyboard,
+    question_navigation_keyboard,
     start_keyboard,
 )
 from app.documents.generator import DocumentGenerator
@@ -32,6 +33,11 @@ def test_document_and_output_choices_are_available() -> None:
         "format:pdf",
         "format:docx",
     ]
+    navigation = question_navigation_keyboard("education", "en").inline_keyboard[0]
+    assert [button.callback_data for button in navigation] == [
+        "flow:back:education",
+        "flow:skip:education",
+    ]
 
 
 def test_template_preview_images_exist() -> None:
@@ -40,6 +46,7 @@ def test_template_preview_images_exist() -> None:
         preview = preview_dir / f"{template_code}.png"
         assert preview.is_file()
         assert preview.stat().st_size > 10_000
+    assert (preview_dir / "sample-profile.png").stat().st_size > 10_000
 
 
 def test_bot_copy_uses_selected_language() -> None:

@@ -1,4 +1,6 @@
+from pathlib import Path
 from uuid import uuid4
+from zipfile import ZipFile
 
 from app.documents.generator import DocumentGenerator
 
@@ -59,6 +61,23 @@ def test_generates_only_selected_resume_format(tmp_path) -> None:
     )
     assert [artifact.format for artifact in artifacts] == ["pdf"]
     assert artifacts[0].path.name == "cv.pdf"
+
+
+def test_resume_docx_contains_profile_photo(tmp_path) -> None:
+    photo_path = Path("app/assets/template_previews/sample-profile.png").resolve()
+    artifacts = DocumentGenerator(tmp_path).generate(
+        uuid4(),
+        {
+            "document_type": "cv",
+            "full_name": "Aziza Karimova",
+            "photo_path": str(photo_path),
+        },
+        "uz",
+        "classic",
+        "docx",
+    )
+    with ZipFile(artifacts[0].path) as archive:
+        assert any(name.startswith("word/media/") for name in archive.namelist())
 
 
 def test_generates_objective_docx(tmp_path) -> None:

@@ -9,6 +9,7 @@
     .page { display: grid; grid-template-columns: 31% 69%; min-height: 297mm; }
     aside { color: white; background: #164f86; padding: 22mm 11mm; }
     aside h1 { font-size: 22pt; line-height: 1.15; margin: 0 0 8px; }
+    .photo { display: block; width: 34mm; height: 44mm; object-fit: cover; border: 2px solid #d7e9fa; border-radius: 4px; margin: 0 auto 12mm; }
     aside .role { color: #d7e9fa; font-size: 12pt; margin-bottom: 20px; }
     aside p { overflow-wrap: anywhere; margin: 0 0 7px; }
     main { padding: 20mm 15mm; }
@@ -21,6 +22,7 @@
 <body>
   <div class="page">
     <aside>
+      {% if photo_uri %}<img class="photo" src="{{ photo_uri }}">{% endif %}
       <h1>{{ resume.full_name or "CV" }}</h1>
       {% if resume.job_title %}<div class="role">{{ resume.job_title }}</div>{% endif %}
       {% if resume.phone %}<p>{{ resume.phone }}</p>{% endif %}

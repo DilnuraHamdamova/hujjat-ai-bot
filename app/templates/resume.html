@@ -6,7 +6,8 @@
     @page { size: A4; margin: 18mm; }
     * { box-sizing: border-box; }
     body { color: #172033; font: 10.5pt/1.45 "DejaVu Sans", Arial, sans-serif; }
-    header { border-bottom: 2px solid #2557a7; padding-bottom: 12px; margin-bottom: 18px; }
+    header { border-bottom: 2px solid #2557a7; min-height: 42mm; padding: 5mm 38mm 12px 0; margin-bottom: 18px; position: relative; }
+    .photo { position: absolute; right: 0; top: 0; width: 30mm; height: 40mm; object-fit: cover; border-radius: 3px; }
     h1 { color: #13233f; font-size: 25pt; line-height: 1.1; margin: 0 0 5px; }
     .role { color: #2557a7; font-size: 13pt; font-weight: 600; }
     .contact { color: #4b5565; margin-top: 8px; }
@@ -20,6 +21,7 @@
 </head>
 <body>
   <header>
+    {% if photo_uri %}<img class="photo" src="{{ photo_uri }}">{% endif %}
     <h1>{{ resume.full_name or "CV" }}</h1>
     <div class="role">{{ resume.job_title or "" }}</div>
     <div class="contact">

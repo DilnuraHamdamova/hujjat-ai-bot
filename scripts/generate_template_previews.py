@@ -33,13 +33,15 @@ def main() -> None:
     project_root = Path(__file__).resolve().parents[1]
     output_dir = project_root / "app" / "assets" / "template_previews"
     output_dir.mkdir(parents=True, exist_ok=True)
+    sample_data = dict(SAMPLE_DATA)
+    sample_data["photo_path"] = str(output_dir / "sample-profile.png")
 
     with tempfile.TemporaryDirectory(prefix="hujjatai-previews-") as temp_dir:
         generator = DocumentGenerator(Path(temp_dir))
         for template_code in ("classic", "modern", "europass"):
             artifact = generator.generate(
                 uuid4(),
-                SAMPLE_DATA,
+                sample_data,
                 "uz",
                 template_code,
                 "pdf",

@@ -4,6 +4,7 @@ from app.services.resume_flow import (
     build_preview,
     next_step,
     parse_answer,
+    previous_step,
     split_preview,
     validate_answer,
 )
@@ -13,6 +14,8 @@ def test_steps_have_a_complete_sequence() -> None:
     assert STEPS[0].key == "full_name"
     assert next_step("full_name").key == "job_title"
     assert next_step("languages") is None
+    assert previous_step("job_title").key == "full_name"
+    assert previous_step("full_name") is None
     assert next_step("objective_full_name", "objective").key == "objective_position"
     assert next_step(OBJECTIVE_STEPS[-1].key, "objective") is None
 

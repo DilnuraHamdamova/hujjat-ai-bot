@@ -18,8 +18,11 @@ from app.bot.keyboards import (
     edit_fields_keyboard,
     language_keyboard,
     output_format_keyboard,
+    photo_navigation_keyboard,
+    question_navigation_keyboard,
     remove_section_keyboard,
     review_keyboard,
+    section_cancel_keyboard,
     start_keyboard,
 )
 from app.core.config import get_settings
@@ -34,8 +37,10 @@ from app.repositories.resumes import (
     get_or_create_user,
     get_user_document_paths,
     mark_completed,
+    move_to_step,
     remove_section,
     reopen_list_step,
+    return_to_review,
     save_answer,
     save_custom_section_content,
     save_custom_section_title,
@@ -43,15 +48,16 @@ from app.repositories.resumes import (
     save_photo,
     set_editing_step,
     set_user_language,
+    skip_step,
     start_custom_section,
 )
 from app.services.localization import normalize_language, step_prompt, text
 from app.services.resume_flow import (
     STEP_BY_KEY,
-    STEPS,
     build_preview,
     next_step,
     parse_answer,
+    previous_step,
     split_preview,
     validate_answer,
 )
@@ -68,6 +74,37 @@ async def _user(session: AsyncSession, telegram_user: TelegramUser) -> User:
         username=telegram_user.username,
         first_name=telegram_user.first_name,
         language_code=telegram_user.language_code,
+    )
+
+
+async def _send_step(message: Message, step_key: str, language: str) -> None:
+    await message.answer(
+        step_prompt(step_key, language),
+        reply_markup=question_navigation_keyboard(step_key, language),
+    )
+
+
+async def _show_template_gallery(message: Message, language: str) -> None:
+    await message.answer(text("template_gallery_intro", language))
+    previews = (
+        ("classic", "template_classic_caption"),
+        ("modern", "template_modern_caption"),
+        ("europass", "template_europass_caption"),
+    )
+    if all((TEMPLATE_PREVIEW_DIR / f"{code}.png").is_file() for code, _ in previews):
+        album = MediaGroupBuilder()
+        for code, caption_key in previews:
+            album.add_photo(
+                media=FSInputFile(TEMPLATE_PREVIEW_DIR / f"{code}.png"),
+                caption=text(caption_key, language),
+            )
+        # aiogram's builder and Message annotations differ on live-photo support.
+        await message.answer_media_group(album.build())  # type: ignore[arg-type]
+    else:
+        logger.error("One or more CV template preview images are missing")
+    await message.answer(
+        text("choose_template", language),
+        reply_markup=cv_template_keyboard(language),
     )
 
 
@@ -143,27 +180,7 @@ async def cv_type_callback(callback: CallbackQuery, session: AsyncSession) -> No
     user = await _user(session, callback.from_user)
     await callback.answer()
     if isinstance(callback.message, Message):
-        await callback.message.edit_text(text("template_gallery_intro", user.language_code))
-        previews = (
-            ("classic", "template_classic_caption"),
-            ("modern", "template_modern_caption"),
-            ("europass", "template_europass_caption"),
-        )
-        if all((TEMPLATE_PREVIEW_DIR / f"{code}.png").is_file() for code, _ in previews):
-            album = MediaGroupBuilder()
-            for code, caption_key in previews:
-                album.add_photo(
-                    media=FSInputFile(TEMPLATE_PREVIEW_DIR / f"{code}.png"),
-                    caption=text(caption_key, user.language_code),
-                )
-            # aiogram's builder and Message annotations differ on live-photo support.
-            await callback.message.answer_media_group(album.build())  # type: ignore[arg-type]
-        else:
-            logger.error("One or more CV template preview images are missing")
-        await callback.message.answer(
-            text("choose_template", user.language_code),
-            reply_markup=cv_template_keyboard(user.language_code),
-        )
+        await _show_template_gallery(callback.message, user.language_code)
 
 
 @router.callback_query(F.data.startswith("template:"))
@@ -174,10 +191,19 @@ async def template_callback(callback: CallbackQuery, session: AsyncSession) -> N
     if template_code not in ("classic", "modern", "europass"):
         return
     user = await _user(session, callback.from_user)
-    await create_resume(session, user.id, document_type="cv", template_code=template_code)
+    await create_resume(
+        session,
+        user.id,
+        document_type="cv",
+        template_code=template_code,
+        awaiting_photo=True,
+    )
     await callback.answer()
     if callback.message:
-        await callback.message.answer(step_prompt(STEPS[0].key, user.language_code))
+        await callback.message.answer(
+            text("send_cv_photo", user.language_code),
+            reply_markup=photo_navigation_keyboard(user.language_code, "cv"),
+        )
 
 
 @router.callback_query(F.data == "document:objective")
@@ -186,7 +212,10 @@ async def objective_type_callback(callback: CallbackQuery, session: AsyncSession
     await create_resume(session, user.id, document_type="objective", awaiting_photo=True)
     await callback.answer()
     if callback.message:
-        await callback.message.answer(text("send_photo", user.language_code))
+        await callback.message.answer(
+            text("send_photo", user.language_code),
+            reply_markup=photo_navigation_keyboard(user.language_code, "objective"),
+        )
 
 
 @router.callback_query(F.data.in_({"document:recommendation", "document:portfolio"}))
@@ -254,10 +283,10 @@ async def edit_field_callback(callback: CallbackQuery, session: AsyncSession) ->
     if draft is None:
         await callback.answer(text("cv_not_found", user.language_code), show_alert=True)
         return
-    await set_editing_step(session, draft, step.key)
+    await set_editing_step(session, draft, step.key, is_list=step.is_list)
     await callback.answer()
-    if callback.message:
-        await callback.message.answer(step_prompt(step.key, user.language_code))
+    if isinstance(callback.message, Message):
+        await _send_step(callback.message, step.key, user.language_code)
 
 
 @router.message(F.photo)
@@ -276,9 +305,9 @@ async def collect_photo(message: Message, session: AsyncSession, bot: Bot) -> No
     photo_dir.mkdir(parents=True, exist_ok=True)
     photo_path = photo_dir / "photo.jpg"
     await bot.download(message.photo[-1], destination=photo_path)
-    await save_photo(session, draft, str(photo_path))
+    draft = await save_photo(session, draft, str(photo_path))
     await message.answer(text("photo_saved", user.language_code))
-    await message.answer(step_prompt("objective_full_name", user.language_code))
+    await _send_step(message, draft.current_step, user.language_code)
 
 
 @router.message(F.voice | F.audio)
@@ -295,14 +324,21 @@ async def collect_text(message: Message, session: AsyncSession) -> None:
     user = await _user(session, message.from_user)
     draft = await get_current_resume(session, user.id)
     if draft is not None and draft.status == "awaiting_photo":
-        await message.answer(text("photo_required", user.language_code))
+        document_type = str(draft.data.get("document_type", "cv"))
+        await message.answer(
+            text("photo_required", user.language_code),
+            reply_markup=photo_navigation_keyboard(user.language_code, document_type),
+        )
         return
     if draft is not None and draft.status == "adding_section_title":
         if len(message.text.strip()) > 80:
             await message.answer(text("long_answer", user.language_code))
             return
         await save_custom_section_title(session, draft, message.text.strip())
-        await message.answer(text("section_content_prompt", user.language_code))
+        await message.answer(
+            text("section_content_prompt", user.language_code),
+            reply_markup=section_cancel_keyboard(user.language_code),
+        )
         return
     if draft is not None and draft.status == "adding_section_content":
         if len(message.text.strip()) > 600:
@@ -311,7 +347,13 @@ async def collect_text(message: Message, session: AsyncSession) -> None:
         draft = await save_custom_section_content(session, draft, message.text.strip())
         await _send_preview(message, draft.data, user.language_code)
         return
-    if draft is None or draft.status not in ("collecting", "editing"):
+    if draft is None or draft.status not in (
+        "collecting",
+        "confirming_list",
+        "confirming_edit_list",
+        "editing",
+        "editing_list",
+    ):
         await message.answer(
             text("start_first", user.language_code),
             reply_markup=start_keyboard(user.language_code),
@@ -328,13 +370,19 @@ async def collect_text(message: Message, session: AsyncSession) -> None:
         await message.answer(validation_error)
         return
 
-    was_editing = draft.status == "editing"
+    was_editing = draft.status in ("editing", "editing_list", "confirming_edit_list")
     document_type = str(draft.data.get("document_type", "cv"))
     following_step = None if was_editing else next_step(step.key, document_type)
     parsed_value = parse_answer(step, message.text)
 
-    if step.is_list and not was_editing and isinstance(parsed_value, list) and parsed_value:
-        await append_list_answer(session, draft, key=step.key, values=parsed_value)
+    if step.is_list and isinstance(parsed_value, list) and parsed_value:
+        await append_list_answer(
+            session,
+            draft,
+            key=step.key,
+            values=parsed_value,
+            editing=was_editing,
+        )
         await message.answer(
             text("add_more_question", user.language_code),
             reply_markup=add_more_keyboard(user.language_code),
@@ -352,44 +400,114 @@ async def collect_text(message: Message, session: AsyncSession) -> None:
     if draft.status == "review":
         await _send_preview(message, draft.data, user.language_code)
     elif following_step:
-        await message.answer(step_prompt(following_step.key, user.language_code))
+        await _send_step(message, following_step.key, user.language_code)
 
 
 @router.callback_query(F.data == "list:add")
 async def add_list_item_callback(callback: CallbackQuery, session: AsyncSession) -> None:
     user = await _user(session, callback.from_user)
     draft = await get_current_resume(session, user.id)
-    if draft is None or draft.status != "confirming_list":
+    if draft is None or draft.status not in ("confirming_list", "confirming_edit_list"):
         await callback.answer(text("broken_state", user.language_code), show_alert=True)
         return
     step = STEP_BY_KEY.get(draft.current_step)
     if step is None:
         await callback.answer(text("broken_state", user.language_code), show_alert=True)
         return
-    await reopen_list_step(session, draft)
+    editing = draft.status == "confirming_edit_list"
+    await reopen_list_step(session, draft, editing=editing)
     await callback.answer()
-    if callback.message:
-        await callback.message.answer(step_prompt(step.key, user.language_code))
+    if isinstance(callback.message, Message):
+        await _send_step(callback.message, step.key, user.language_code)
 
 
 @router.callback_query(F.data == "list:done")
 async def finish_list_callback(callback: CallbackQuery, session: AsyncSession) -> None:
     user = await _user(session, callback.from_user)
     draft = await get_current_resume(session, user.id)
-    if draft is None or draft.status != "confirming_list":
+    if draft is None or draft.status not in ("confirming_list", "confirming_edit_list"):
         await callback.answer(text("broken_state", user.language_code), show_alert=True)
         return
+    editing = draft.status == "confirming_edit_list"
     document_type = str(draft.data.get("document_type", "cv"))
-    following_step = next_step(draft.current_step, document_type)
-    draft = await continue_after_list(
-        session, draft, following_step.key if following_step else None
-    )
+    following_step = None if editing else next_step(draft.current_step, document_type)
+    if editing:
+        draft = await return_to_review(session, draft)
+    else:
+        draft = await continue_after_list(
+            session, draft, following_step.key if following_step else None
+        )
     await callback.answer()
     if isinstance(callback.message, Message):
         if following_step:
-            await callback.message.answer(step_prompt(following_step.key, user.language_code))
+            await _send_step(callback.message, following_step.key, user.language_code)
         else:
             await _send_preview(callback.message, draft.data, user.language_code)
+
+
+@router.callback_query(F.data.startswith("flow:back"))
+async def flow_back_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    user = await _user(session, callback.from_user)
+    draft = await get_current_resume(session, user.id)
+    if draft is None:
+        await callback.answer(text("old_button", user.language_code), show_alert=True)
+        return
+    requested_step = callback.data.rsplit(":", 1)[-1] if callback.data else ""
+    if requested_step not in ("back", draft.current_step):
+        await callback.answer(text("old_button", user.language_code), show_alert=True)
+        return
+    if draft.status in ("editing", "editing_list", "confirming_edit_list"):
+        draft = await return_to_review(session, draft)
+        await callback.answer()
+        if isinstance(callback.message, Message):
+            await _send_preview(callback.message, draft.data, user.language_code)
+        return
+
+    document_type = str(draft.data.get("document_type", "cv"))
+    preceding_step = previous_step(draft.current_step, document_type)
+    await callback.answer()
+    if not isinstance(callback.message, Message):
+        return
+    if preceding_step:
+        await move_to_step(session, draft, preceding_step.key)
+        await _send_step(callback.message, preceding_step.key, user.language_code)
+    elif document_type == "cv":
+        await _show_template_gallery(callback.message, user.language_code)
+    else:
+        await callback.message.answer(
+            text("choose_document", user.language_code),
+            reply_markup=document_type_keyboard(user.language_code),
+        )
+
+
+@router.callback_query(F.data.startswith("flow:skip:"))
+async def flow_skip_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    if callback.data is None:
+        return
+    user = await _user(session, callback.from_user)
+    draft = await get_current_resume(session, user.id)
+    requested_step = callback.data.rsplit(":", 1)[-1]
+    if (
+        draft is None
+        or requested_step != draft.current_step
+        or draft.status not in ("collecting", "editing", "editing_list")
+    ):
+        await callback.answer(text("old_button", user.language_code), show_alert=True)
+        return
+    document_type = str(draft.data.get("document_type", "cv"))
+    following_step = next_step(draft.current_step, document_type)
+    draft = await skip_step(
+        session,
+        draft,
+        key=requested_step,
+        next_step_key=following_step.key if following_step else None,
+    )
+    await callback.answer()
+    if isinstance(callback.message, Message):
+        if draft.status == "review":
+            await _send_preview(callback.message, draft.data, user.language_code)
+        elif following_step:
+            await _send_step(callback.message, following_step.key, user.language_code)
 
 
 @router.callback_query(F.data == "section:add")
@@ -402,7 +520,23 @@ async def add_section_callback(callback: CallbackQuery, session: AsyncSession) -
     await start_custom_section(session, draft)
     await callback.answer()
     if callback.message:
-        await callback.message.answer(text("section_title_prompt", user.language_code))
+        await callback.message.answer(
+            text("section_title_prompt", user.language_code),
+            reply_markup=section_cancel_keyboard(user.language_code),
+        )
+
+
+@router.callback_query(F.data == "section:cancel")
+async def cancel_section_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    user = await _user(session, callback.from_user)
+    draft = await get_current_resume(session, user.id)
+    if draft is None:
+        await callback.answer(text("old_button", user.language_code), show_alert=True)
+        return
+    draft = await return_to_review(session, draft)
+    await callback.answer()
+    if isinstance(callback.message, Message):
+        await _send_preview(callback.message, draft.data, user.language_code)
 
 
 @router.callback_query(F.data == "section:remove")

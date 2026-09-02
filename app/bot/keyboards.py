@@ -56,19 +56,61 @@ def output_format_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def add_more_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+def question_navigation_keyboard(step_key: str, language: str = "uz") -> InlineKeyboardMarkup:
     locale = normalize_language(language)
     labels: dict[Language, tuple[str, str]] = {
-        "uz": ("➕ Yana qo‘shish", "✅ Davom etish"),
-        "en": ("➕ Add another", "✅ Continue"),
-        "ru": ("➕ Добавить ещё", "✅ Продолжить"),
+        "uz": ("⬅️ Orqaga", "⏭ O‘tkazib yuborish"),
+        "en": ("⬅️ Back", "⏭ Skip"),
+        "ru": ("⬅️ Назад", "⏭ Пропустить"),
     }
-    add_label, continue_label = labels[locale]
+    back_label, skip_label = labels[locale]
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=back_label, callback_data=f"flow:back:{step_key}"),
+                InlineKeyboardButton(text=skip_label, callback_data=f"flow:skip:{step_key}"),
+            ]
+        ]
+    )
+
+
+def photo_navigation_keyboard(
+    language: str = "uz", document_type: str = "cv"
+) -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    label = {
+        "uz": "⬅️ Shablonlarga qaytish" if document_type == "cv" else "⬅️ Orqaga",
+        "en": "⬅️ Back to templates" if document_type == "cv" else "⬅️ Back",
+        "ru": "⬅️ К шаблонам" if document_type == "cv" else "⬅️ Назад",
+    }[locale]
+    callback_data = "document:cv" if document_type == "cv" else "document:choose"
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=label, callback_data=callback_data)]]
+    )
+
+
+def add_more_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    labels: dict[Language, tuple[str, str, str]] = {
+        "uz": ("➕ Yana qo‘shish", "✅ Davom etish", "⬅️ Orqaga"),
+        "en": ("➕ Add another", "✅ Continue", "⬅️ Back"),
+        "ru": ("➕ Добавить ещё", "✅ Продолжить", "⬅️ Назад"),
+    }
+    add_label, continue_label, back_label = labels[locale]
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text=add_label, callback_data="list:add")],
             [InlineKeyboardButton(text=continue_label, callback_data="list:done")],
+            [InlineKeyboardButton(text=back_label, callback_data="flow:back")],
         ]
+    )
+
+
+def section_cancel_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    label = {"uz": "⬅️ Orqaga", "en": "⬅️ Back", "ru": "⬅️ Назад"}[locale]
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=label, callback_data="section:cancel")]]
     )
 
 
@@ -272,6 +314,8 @@ def remove_section_keyboard(data: dict[str, object], language: str = "uz") -> In
                         )
                     ]
                 )
+    back_label = {"uz": "⬅️ Orqaga", "en": "⬅️ Back", "ru": "⬅️ Назад"}[locale]
+    rows.append([InlineKeyboardButton(text=back_label, callback_data="resume:last")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 

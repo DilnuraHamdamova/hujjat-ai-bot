@@ -55,7 +55,9 @@ async def create_resume(
                     "awaiting_photo",
                     "collecting",
                     "confirming_list",
+                    "confirming_edit_list",
                     "editing",
+                    "editing_list",
                     "review",
                     "adding_section_title",
                     "adding_section_content",
@@ -90,7 +92,9 @@ async def get_current_resume(session: AsyncSession, user_id: UUID) -> ResumeDraf
                     "awaiting_photo",
                     "collecting",
                     "confirming_list",
+                    "confirming_edit_list",
                     "editing",
+                    "editing_list",
                     "review",
                     "adding_section_title",
                     "adding_section_content",
@@ -117,7 +121,7 @@ async def save_answer(
     draft.data = data
     draft.version += 1
 
-    if draft.status == "editing":
+    if draft.status in ("editing", "editing_list"):
         draft.status = "review"
     elif next_step_key is None:
         draft.status = "review"
@@ -130,7 +134,12 @@ async def save_answer(
 
 
 async def append_list_answer(
-    session: AsyncSession, draft: ResumeDraft, *, key: str, values: list[str]
+    session: AsyncSession,
+    draft: ResumeDraft,
+    *,
+    key: str,
+    values: list[str],
+    editing: bool = False,
 ) -> ResumeDraft:
     data = dict(draft.data)
     current = data.get(key, [])
@@ -138,7 +147,7 @@ async def append_list_answer(
     items.extend(values)
     data[key] = items
     draft.data = data
-    draft.status = "confirming_list"
+    draft.status = "confirming_edit_list" if editing else "confirming_list"
     draft.current_step = key
     draft.version += 1
     await session.commit()
@@ -159,15 +168,19 @@ async def continue_after_list(
     return draft
 
 
-async def reopen_list_step(session: AsyncSession, draft: ResumeDraft) -> ResumeDraft:
-    draft.status = "collecting"
+async def reopen_list_step(
+    session: AsyncSession, draft: ResumeDraft, *, editing: bool = False
+) -> ResumeDraft:
+    draft.status = "editing_list" if editing else "collecting"
     await session.commit()
     await session.refresh(draft)
     return draft
 
 
-async def set_editing_step(session: AsyncSession, draft: ResumeDraft, step_key: str) -> ResumeDraft:
-    draft.status = "editing"
+async def set_editing_step(
+    session: AsyncSession, draft: ResumeDraft, step_key: str, *, is_list: bool = False
+) -> ResumeDraft:
+    draft.status = "editing_list" if is_list else "editing"
     draft.current_step = step_key
     await session.commit()
     await session.refresh(draft)
@@ -179,7 +192,47 @@ async def save_photo(session: AsyncSession, draft: ResumeDraft, photo_path: str)
     data["photo_path"] = photo_path
     draft.data = data
     draft.status = "collecting"
-    draft.current_step = "objective_full_name"
+    draft.current_step = (
+        "objective_full_name" if data.get("document_type") == "objective" else "full_name"
+    )
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def move_to_step(session: AsyncSession, draft: ResumeDraft, step_key: str) -> ResumeDraft:
+    draft.status = "collecting"
+    draft.current_step = step_key
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def skip_step(
+    session: AsyncSession,
+    draft: ResumeDraft,
+    *,
+    key: str,
+    next_step_key: str | None,
+) -> ResumeDraft:
+    data = dict(draft.data)
+    data.pop(key, None)
+    draft.data = data
+    if draft.status in ("editing", "editing_list"):
+        draft.status = "review"
+    elif next_step_key is None:
+        draft.status = "review"
+    else:
+        draft.status = "collecting"
+        draft.current_step = next_step_key
+    draft.version += 1
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def return_to_review(session: AsyncSession, draft: ResumeDraft) -> ResumeDraft:
+    draft.status = "review"
     await session.commit()
     await session.refresh(draft)
     return draft

@@ -91,6 +91,14 @@ def next_step(current_key: str, document_type: str = "cv") -> Step | None:
     return steps[0]
 
 
+def previous_step(current_key: str, document_type: str = "cv") -> Step | None:
+    steps = steps_for(document_type)
+    for index, step in enumerate(steps):
+        if step.key == current_key:
+            return steps[index - 1] if index > 0 else None
+    return None
+
+
 def validate_answer(step: Step, answer: str, language: str = "uz") -> str | None:
     clean = answer.strip()
     if not clean:
