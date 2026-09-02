@@ -43,9 +43,9 @@ TEXTS: dict[str, dict[Language, str]] = {
         "ru": "Выберите шаблон резюме:",
     },
     "template_gallery_intro": {
-        "uz": "Quyidagi shablon namunalarini ko‘rib, bittasini tanlang:",
-        "en": "Review the template previews below and choose one:",
-        "ru": "Посмотрите примеры шаблонов ниже и выберите один:",
+        "uz": "CV ko‘rinishini tanlang. Tayyor hujjat aynan tanlagan modelingizda yaratiladi:",
+        "en": "Choose a resume style. Your document will be generated in the selected design:",
+        "ru": "Выберите стиль резюме. Документ будет создан именно в выбранном дизайне:",
     },
     "template_classic_caption": {
         "uz": "1. Classic — sodda va rasmiy",

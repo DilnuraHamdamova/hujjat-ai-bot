@@ -79,14 +79,32 @@ class DocumentGenerator:
         styles["Normal"].font.name = "Arial"
         styles["Normal"].font.size = Pt(10)
 
+        # Keep the Word export visually distinct as well as the PDF export.
+        section = document.sections[0]
+        if template_code == "modern":
+            section.left_margin = Inches(0.8)
+            section.right_margin = Inches(0.8)
+        elif template_code == "europass":
+            section.left_margin = Inches(0.65)
+            section.right_margin = Inches(0.65)
+
         photo_path = Path(str(raw_data.get("photo_path", "")))
         if photo_path.is_file():
             photo = document.add_paragraph()
-            photo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            photo.alignment = (
+                WD_ALIGN_PARAGRAPH.RIGHT
+                if template_code in ("modern", "europass")
+                else WD_ALIGN_PARAGRAPH.CENTER
+            )
             photo.add_run().add_picture(str(photo_path), width=Inches(1.18), height=Inches(1.57))
 
+        title_alignment = (
+            WD_ALIGN_PARAGRAPH.LEFT
+            if template_code in ("modern", "europass")
+            else WD_ALIGN_PARAGRAPH.CENTER
+        )
         title = document.add_paragraph()
-        title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        title.alignment = title_alignment
         name_run = title.add_run(data.full_name or "CV")
         name_run.bold = True
         name_run.font.size = Pt(22)
@@ -96,13 +114,13 @@ class DocumentGenerator:
             name_run.font.color.rgb = RGBColor(13, 148, 136)
 
         position = document.add_paragraph()
-        position.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        position.alignment = title_alignment
         position_run = position.add_run(data.job_title or "")
         position_run.font.size = Pt(13)
 
         contacts = " | ".join(item for item in (data.phone, data.email, data.location) if item)
         contact_paragraph = document.add_paragraph(contacts)
-        contact_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        contact_paragraph.alignment = title_alignment
 
         DocumentGenerator._add_section(
             document, labels["profile"], [data.summary] if data.summary else []
