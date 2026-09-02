@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.routes import router as api_router
+from app.bot.commands import default_commands
 from app.bot.setup import bot, dispatcher
 from app.core.config import get_settings
 from app.core.logging import configure_logging
@@ -26,6 +27,9 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     # MVP bootstrap. Production deployments should apply Alembic before app startup.
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
+
+    await bot.set_my_commands(default_commands())
+    logger.info("Telegram command menu configured")
 
     polling_task: asyncio.Task[None] | None = None
     if settings.bot_mode == "webhook":
