@@ -1,39 +1,40 @@
 <!doctype html>
-<html lang="{{ language }}">
-<head>
-  <meta charset="utf-8">
-  <style>
-    @page { size: A4; margin: 0; }
-    * { box-sizing: border-box; }
-    body { margin: 0; color: #24323d; font: 10.5pt/1.45 "DejaVu Sans", Arial, sans-serif; }
-    header { color: white; background: #0f766e; min-height: 59mm; padding: 19mm 55mm 14mm 20mm; position: relative; }
-    .photo { position: absolute; right: 20mm; top: 10mm; width: 30mm; height: 40mm; object-fit: cover; border: 2px solid #ccfbf1; border-radius: 4px; }
-    h1 { font-size: 27pt; margin: 0 0 5px; }
-    .role { color: #ccfbf1; font-size: 14pt; }
-    .contact { margin-top: 10px; }
-    main { padding: 13mm 20mm 18mm; }
-    h2 { color: #0f766e; border-left: 4px solid #2dd4bf; font-size: 12pt; padding-left: 8px; margin: 16px 0 7px; }
-    p { margin: 0 0 8px; }
-    ul { margin: 0; padding-left: 18px; }
-    li { margin-bottom: 4px; }
-    .skills { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; list-style: none; }
-    .skills li { background: #ccfbf1; border-radius: 12px; padding: 4px 9px; }
-  </style>
-</head>
-<body>
-  <header>
-    {% if photo_uri %}<img class="photo" src="{{ photo_uri }}">{% endif %}
-    <h1>{{ resume.full_name or "CV" }}</h1>
-    {% if resume.job_title %}<div class="role">{{ resume.job_title }}</div>{% endif %}
-    <div class="contact">{{ [resume.phone, resume.email, resume.location] | select | join(" · ") }}</div>
-  </header>
-  <main>
-    {% if resume.summary %}<h2>{{ labels.profile }}</h2><p>{{ resume.summary }}</p>{% endif %}
-    {% if resume.skills %}<h2>{{ labels.skills }}</h2><ul class="skills">{% for item in resume.skills %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-    {% if resume.experience %}<h2>{{ labels.experience }}</h2><ul>{% for item in resume.experience %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-    {% if resume.education %}<h2>{{ labels.education }}</h2><ul>{% for item in resume.education %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-    {% if resume.languages %}<h2>{{ labels.languages }}</h2><ul>{% for item in resume.languages %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-    {% for section in custom_sections %}{% if section.title and section.content %}<h2>{{ section.title }}</h2><p>{{ section.content }}</p>{% endif %}{% endfor %}
-  </main>
-</body>
-</html>
+<html lang="{{ language }}"><head><meta charset="utf-8"><style>
+@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;color:#25313b;font:9pt/1.4 Arial,"DejaVu Sans",sans-serif}.page{min-height:297mm}h1,h2,p{margin-top:0}ul{padding-left:5mm}li{margin-bottom:1.5mm}.clear{clear:both}
+.v1{display:grid;grid-template-columns:31% 69%}.v1 aside{background:#9bc7c0;padding:16mm 8mm}.v1 .photo{display:block;width:35mm;height:35mm;border-radius:50%;object-fit:cover;margin:0 auto 6mm}.v1 aside h1{text-align:center;font-size:19pt}.v1 aside .role{text-align:center;font-size:11pt;margin-bottom:12mm}.v1 aside h2{font-size:10pt;border-bottom:1px solid #456b68;margin:8mm 0 3mm}.v1 aside p,.v1 aside li{font-size:8pt}.v1 main{padding:13mm 11mm}.v1 main h2{color:#73a9a2;text-align:center;font-size:15pt;margin:5mm 0 2mm}.v1 main li{margin-bottom:2mm}
+.v2{display:grid;grid-template-columns:69% 31%}.v2 main{padding:13mm 10mm}.v2 aside{background:#234765;color:#fff;padding:13mm 8mm}.v2 .photo{display:block;width:30mm;height:30mm;object-fit:cover;margin:0 auto 9mm}.v2 h1{font-size:21pt;color:#33404c}.v2 .role{color:#168bc0;margin-bottom:3mm}.v2 main h2{color:#168bc0;font-size:11pt;margin:6mm 0 2mm}.v2 aside h2{border-bottom:1px solid #aac1d2;font-size:10pt;margin:7mm 0 3mm}.v2 aside p,.v2 aside li{font-size:8pt}
+.v3 header{background:#062f50;color:#fff;padding:13mm 16mm;min-height:52mm}.v3 .photo{float:left;width:30mm;height:30mm;border-radius:50%;object-fit:cover;margin-right:8mm}.v3 h1{font-size:24pt;margin:5mm 0 1mm}.v3 .role{color:#a8c6d9}.v3 .columns{display:grid;grid-template-columns:34% 66%;gap:9mm;padding:10mm 14mm}.v3 h2{background:#f1f4f6;color:#273846;font-size:10pt;padding:2mm;margin:5mm 0 2mm}.v3 p,.v3 li{font-size:8.5pt}
+</style></head><body>
+{% macro render_custom_sections() %}{% for s in custom_sections %}{% if s.title and s.content %}<h2>{{ s.title }}</h2><p>{{ s.content }}</p>{% endif %}{% endfor %}{% endmacro %}
+{% if template_code == 'modern_1' %}
+<div class="page v1"><aside>
+  {% if photo_uri %}<img class="photo" src="{{ photo_uri }}">{% endif %}<h1>{{ resume.full_name or 'CV' }}</h1><div class="role">{{ resume.job_title or '' }}</div>
+  <h2>CONTACT</h2>{% if resume.phone %}<p>☎ {{ resume.phone }}</p>{% endif %}{% if resume.email %}<p>✉ {{ resume.email }}</p>{% endif %}{% if resume.location %}<p>⌖ {{ resume.location }}</p>{% endif %}
+  {% if resume.skills %}<h2>{{ labels.skills|upper }}</h2><ul>{% for x in resume.skills %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+</aside><main>
+  {% if resume.summary %}<h2>{{ labels.profile }}</h2><p>{{ resume.summary }}</p>{% endif %}
+  {% if resume.experience %}<h2>{{ labels.experience }}</h2>{% for x in resume.experience %}<p><strong>{{ x }}</strong></p>{% endfor %}{% endif %}
+  {% if resume.education %}<h2>{{ labels.education }}</h2><ul>{% for x in resume.education %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+  {% if resume.languages %}<h2>{{ labels.languages }}</h2><ul>{% for x in resume.languages %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}{{ render_custom_sections() }}
+</main></div>
+{% elif template_code == 'modern_2' %}
+<div class="page v2"><main>
+  <h1>{{ resume.full_name or 'CV' }}</h1><div class="role">{{ resume.job_title or '' }}</div>
+  {% if resume.summary %}<h2>{{ labels.profile|upper }}</h2><p>{{ resume.summary }}</p>{% endif %}
+  {% if resume.experience %}<h2>{{ labels.experience|upper }}</h2>{% for x in resume.experience %}<p><strong>{{ x }}</strong></p>{% endfor %}{% endif %}
+  {% if resume.education %}<h2>{{ labels.education|upper }}</h2><ul>{% for x in resume.education %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}{{ render_custom_sections() }}
+</main><aside>
+  {% if photo_uri %}<img class="photo" src="{{ photo_uri }}">{% endif %}<h2>CONTACT</h2><p>{{ [resume.phone,resume.email,resume.location]|select|join('<br>')|safe }}</p>
+  {% if resume.skills %}<h2>{{ labels.skills|upper }}</h2><ul>{% for x in resume.skills %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+  {% if resume.languages %}<h2>{{ labels.languages|upper }}</h2><ul>{% for x in resume.languages %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+</aside></div>
+{% else %}
+<div class="page v3"><header>{% if photo_uri %}<img class="photo" src="{{ photo_uri }}">{% endif %}<h1>{{ resume.full_name or 'CV' }}</h1><div class="role">{{ resume.job_title or '' }}</div><div class="clear"></div></header>
+<div class="columns"><aside><h2>CONTACT</h2><p>{{ [resume.phone,resume.email,resume.location]|select|join('<br>')|safe }}</p>
+  {% if resume.education %}<h2>{{ labels.education|upper }}</h2><ul>{% for x in resume.education %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+  {% if resume.skills %}<h2>{{ labels.skills|upper }}</h2><ul>{% for x in resume.skills %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+</aside><main>{% if resume.summary %}<h2>{{ labels.profile|upper }}</h2><p>{{ resume.summary }}</p>{% endif %}
+  {% if resume.experience %}<h2>{{ labels.experience|upper }}</h2>{% for x in resume.experience %}<p><strong>{{ x }}</strong></p>{% endfor %}{% endif %}
+  {% if resume.languages %}<h2>{{ labels.languages|upper }}</h2><ul>{% for x in resume.languages %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}{{ render_custom_sections() }}
+</main></div></div>
+{% endif %}</body></html>

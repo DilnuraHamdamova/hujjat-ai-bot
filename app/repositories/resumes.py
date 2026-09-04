@@ -56,11 +56,15 @@ async def create_resume(
                     "collecting",
                     "confirming_list",
                     "confirming_edit_list",
+                    "confirming_education",
+                    "selecting_relatives",
+                    "confirming_relative",
                     "editing",
                     "editing_list",
                     "review",
                     "adding_section_title",
                     "adding_section_content",
+                    "portfolio_token",
                 )
             ),
         )
@@ -93,11 +97,15 @@ async def get_current_resume(session: AsyncSession, user_id: UUID) -> ResumeDraf
                     "collecting",
                     "confirming_list",
                     "confirming_edit_list",
+                    "confirming_education",
+                    "selecting_relatives",
+                    "confirming_relative",
                     "editing",
                     "editing_list",
                     "review",
                     "adding_section_title",
                     "adding_section_content",
+                    "portfolio_token",
                     "completed",
                 )
             ),
@@ -149,6 +157,31 @@ async def append_list_answer(
     draft.data = data
     draft.status = "confirming_edit_list" if editing else "confirming_list"
     draft.current_step = key
+    draft.version += 1
+    await session.commit()
+    await session.refresh(draft)
+    return draft
+
+
+async def update_draft_flow(
+    session: AsyncSession,
+    draft: ResumeDraft,
+    *,
+    data_updates: dict[str, Any] | None = None,
+    remove_keys: tuple[str, ...] = (),
+    status: str | None = None,
+    current_step: str | None = None,
+) -> ResumeDraft:
+    data = dict(draft.data)
+    for key in remove_keys:
+        data.pop(key, None)
+    if data_updates:
+        data.update(data_updates)
+    draft.data = data
+    if status is not None:
+        draft.status = status
+    if current_step is not None:
+        draft.current_step = current_step
     draft.version += 1
     await session.commit()
     await session.refresh(draft)

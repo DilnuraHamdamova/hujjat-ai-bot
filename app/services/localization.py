@@ -47,6 +47,21 @@ TEXTS: dict[str, dict[Language, str]] = {
         "en": "Choose a Europass design:",
         "ru": "Выберите дизайн Europass:",
     },
+    "choose_template_variant": {
+        "uz": "Ushbu turdagi 3 ta shablondan birini tanlang:",
+        "en": "Choose one of the three templates in this style:",
+        "ru": "Выберите один из трёх шаблонов этого стиля:",
+    },
+    "skill_suggestions_hint": {
+        "uz": "Lavozimingizga mos ko‘nikmalar:",
+        "en": "Skills suggested for your position:",
+        "ru": "Навыки, рекомендованные для вашей должности:",
+    },
+    "template_selected": {
+        "uz": "✅ Shablon tanlandi.",
+        "en": "✅ Template selected.",
+        "ru": "✅ Шаблон выбран.",
+    },
     "template_gallery_intro": {
         "uz": "CV ko‘rinishini tanlang. Tayyor hujjat aynan tanlagan modelingizda yaratiladi:",
         "en": "Choose a resume style. Your document will be generated in the selected design:",
@@ -75,29 +90,35 @@ TEXTS: dict[str, dict[Language, str]] = {
     "send_photo": {
         "uz": (
             "Obyektivka uchun 3×4 formatga mos, yuzingiz aniq ko‘rinadigan "
-            "rasm yuboring. Rasm qo‘shish majburiy."
+            "rasm yuboring. Rasm qo‘shish majburiy.\n"
+            "Qo‘llab-quvvatlanadigan formatlar: JPG, JPEG yoki PNG."
         ),
         "en": (
             "Send a clear portrait suitable for a 3×4 photo. "
-            "A photo is required for the personal information sheet."
+            "A photo is required for the personal information sheet.\n"
+            "Supported formats: JPG, JPEG, or PNG."
         ),
         "ru": (
             "Отправьте чёткую портретную фотографию формата 3×4. "
-            "Фотография для объективки обязательна."
+            "Фотография для объективки обязательна.\n"
+            "Поддерживаемые форматы: JPG, JPEG или PNG."
         ),
     },
     "send_cv_photo": {
         "uz": (
             "CV uchun yuzingiz aniq ko‘rinadigan professional rasm yuboring. "
-            "Rasm barcha shablonlarda ko‘rsatiladi va uni qo‘shish majburiy."
+            "Rasm qo‘shish ixtiyoriy — xohlamasangiz «Rasmsiz davom etish»ni bosing. "
+            "Qo‘llab-quvvatlanadigan formatlar: JPG, JPEG yoki PNG."
         ),
         "en": (
             "Send a clear professional portrait for your resume. "
-            "The photo is required and will appear in every template."
+            "The photo is optional; choose Continue without photo to skip it. "
+            "Supported formats: JPG, JPEG, or PNG."
         ),
         "ru": (
             "Отправьте чёткую профессиональную фотографию для резюме. "
-            "Фото обязательно и будет показано во всех шаблонах."
+            "Фото необязательно — можно продолжить без него. "
+            "Поддерживаемые форматы: JPG, JPEG или PNG."
         ),
     },
     "photo_saved": {
@@ -106,9 +127,24 @@ TEXTS: dict[str, dict[Language, str]] = {
         "ru": "✅ Фотография сохранена.",
     },
     "photo_required": {
-        "uz": "Avval rasmni foto ko‘rinishida yuboring.",
-        "en": "Please send the photo first.",
-        "ru": "Сначала отправьте фотографию.",
+        "uz": "Avval JPG, JPEG yoki PNG formatidagi rasmni yuboring.",
+        "en": "Please send a JPG, JPEG, or PNG image first.",
+        "ru": "Сначала отправьте изображение в формате JPG, JPEG или PNG.",
+    },
+    "invalid_photo_format": {
+        "uz": "Bu format mos emas. Rasmni JPG, JPEG yoki PNG formatida yuboring.",
+        "en": "This format is not supported. Send a JPG, JPEG, or PNG image.",
+        "ru": "Этот формат не поддерживается. Отправьте JPG, JPEG или PNG.",
+    },
+    "invalid_relative_birth": {
+        "uz": "Tug‘ilgan sana va joyni quyidagi formatda kiriting: 20.03.1965, Toshkent shahri",
+        "en": "Enter the birth date and place in this format: 20.03.1965, Tashkent",
+        "ru": "Введите дату и место рождения в формате: 20.03.1965, Ташкент",
+    },
+    "stopped": {
+        "uz": "⏹ Joriy hujjat yaratish to‘xtatildi.",
+        "en": "⏹ Current document creation stopped.",
+        "ru": "⏹ Создание текущего документа остановлено.",
     },
     "section_title_prompt": {
         "uz": "Yangi bo‘lim nomini kiriting (masalan: Sertifikatlar):",
@@ -145,6 +181,34 @@ TEXTS: dict[str, dict[Language, str]] = {
         "en": "✅ Saved. Would you like to add another?",
         "ru": "✅ Сохранено. Добавить ещё?",
     },
+    "education_saved": {
+        "uz": "✅ Ta’lim ma’lumoti to‘liq saqlandi. Yana ta’lim qo‘shasizmi?",
+        "en": "✅ The education entry is complete. Add another education entry?",
+        "ru": "✅ Запись об образовании сохранена полностью. Добавить ещё одну?",
+    },
+    "choose_relatives": {
+        "uz": (
+            "Sizda qaysi yaqin qarindoshlar bor? Keraklilarini belgilang, "
+            "so‘ng «Davom etish»ni bosing:"
+        ),
+        "en": "Which close relatives do you have? Select all that apply, then press Continue:",
+        "ru": "Какие близкие родственники у вас есть? Выберите нужные и нажмите «Продолжить»:",
+    },
+    "choose_education_button": {
+        "uz": "Ma’lumotingizni quyidagi tugmalardan birini bosib tanlang:",
+        "en": "Choose your education level using one of the buttons below:",
+        "ru": "Выберите уровень образования одной из кнопок:",
+    },
+    "choose_at_least_one_relative": {
+        "uz": "Kamida bitta qarindosh turini belgilang yoki «Yo‘q»ni tanlang.",
+        "en": "Select at least one relative type or choose None.",
+        "ru": "Выберите хотя бы один тип родственника или вариант «Нет».",
+    },
+    "relative_saved_more": {
+        "uz": "✅ Saqlandi. Shu qarindoshlikdan yana bormi?",
+        "en": "✅ Saved. Do you have another relative of this type?",
+        "ru": "✅ Сохранено. Есть ещё родственник этого типа?",
+    },
     "old_button": {
         "uz": "Bu tugma eski savolga tegishli. Eng oxirgi xabardagi tugmalardan foydalaning.",
         "en": "This button belongs to an older question. Use the buttons in the latest message.",
@@ -155,15 +219,18 @@ TEXTS: dict[str, dict[Language, str]] = {
     "help": {
         "uz": (
             "<b>Buyruqlar</b>\n/start — asosiy menyu\n/new — yangi hujjat\n"
-            "/my_cv — oxirgi hujjat\n/delete_me — barcha ma’lumotlarni o‘chirish"
+            "/stop — joriy jarayonni to‘xtatish\n/my_cv — oxirgi hujjat\n"
+            "/delete_me — barcha ma’lumotlarni o‘chirish"
         ),
         "en": (
             "<b>Commands</b>\n/start — main menu\n/new — new document\n"
-            "/my_cv — latest document\n/delete_me — delete all my data"
+            "/stop — stop current process\n/my_cv — latest document\n"
+            "/delete_me — delete all my data"
         ),
         "ru": (
             "<b>Команды</b>\n/start — главное меню\n/new — новый документ\n"
-            "/my_cv — последний документ\n/delete_me — удалить все мои данные"
+            "/stop — остановить текущий процесс\n/my_cv — последний документ\n"
+            "/delete_me — удалить все мои данные"
         ),
     },
     "no_cv": {
@@ -179,15 +246,29 @@ TEXTS: dict[str, dict[Language, str]] = {
     "invalid_field": {"uz": "Noto‘g‘ri maydon", "en": "Invalid field", "ru": "Неверное поле"},
     "cv_not_found": {"uz": "CV topilmadi", "en": "Resume not found", "ru": "Резюме не найдено"},
     "voice_disabled": {
-        "uz": (
-            "Ovozli xabar funksiyasi keyingi bosqichda ulanadi. "
-            "Hozir javobni matn ko‘rinishida yuboring."
-        ),
-        "en": (
-            "Voice messages will be enabled in a later update. "
-            "Please send your answer as text for now."
-        ),
-        "ru": "Голосовые сообщения будут подключены позже. Пока отправьте ответ текстом.",
+        "uz": "Ovozli javob uchun GEMINI_API_KEY sozlanmagan. Javobni matnda yuboring.",
+        "en": "GEMINI_API_KEY is not configured for voice answers. Send the answer as text.",
+        "ru": "Для голосовых ответов не настроен GEMINI_API_KEY. Отправьте ответ текстом.",
+    },
+    "voice_processing": {
+        "uz": "🎙 Ovozli javob tushunilmoqda...",
+        "en": "🎙 Understanding your voice answer...",
+        "ru": "🎙 Распознаю голосовой ответ...",
+    },
+    "voice_transcribed": {
+        "uz": "📝 Tushunilgan javob: <i>{answer}</i>",
+        "en": "📝 Understood answer: <i>{answer}</i>",
+        "ru": "📝 Распознанный ответ: <i>{answer}</i>",
+    },
+    "voice_too_large": {
+        "uz": "Audio fayl juda katta. 20 MB dan kichikroq audio yuboring.",
+        "en": "The audio file is too large. Send an audio file smaller than 20 MB.",
+        "ru": "Аудиофайл слишком большой. Отправьте файл размером менее 20 МБ.",
+    },
+    "voice_error": {
+        "uz": "Ovozli javobni tushunib bo‘lmadi. Qayta yuboring yoki matnda yozing.",
+        "en": "The voice answer could not be understood. Try again or send it as text.",
+        "ru": "Не удалось распознать голосовой ответ. Повторите или отправьте его текстом.",
     },
     "start_first": {
         "uz": "Avval yangi CV yaratishni boshlang.",
@@ -299,9 +380,9 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Введите адрес электронной почты:",
     },
     "location": {
-        "uz": "Yashash joyingizni kiriting (masalan, Toshkent):",
-        "en": "Enter your location (for example, Tashkent):",
-        "ru": "Укажите место проживания (например, Ташкент):",
+        "uz": "Yashash joyingizni kiriting:",
+        "en": "Enter your location:",
+        "ru": "Укажите место проживания:",
     },
     "summary": {
         "uz": "O‘zingiz haqingizda qisqa professional ma’lumot yozing:",
@@ -309,9 +390,14 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Напишите краткое профессиональное описание:",
     },
     "skills": {
-        "uz": "Bitta ko‘nikmangizni kiriting:",
-        "en": "Enter one skill:",
-        "ru": "Введите один навык:",
+        "uz": "Ko‘nikmalaringizni vergul bilan ajratib kiriting (masalan: Java, SQL, Git):",
+        "en": "Enter your skills separated by commas (for example: Java, SQL, Git):",
+        "ru": "Введите навыки через запятую (например: Java, SQL, Git):",
+    },
+    "skill_suggestions_hint": {
+        "uz": "Lavozimingizga mos ko‘nikmalar:",
+        "en": "Skills suggested for your position:",
+        "ru": "Навыки, рекомендованные для вашей должности:",
     },
     "experience": {
         "uz": "Bitta ish joyi va tajribangizni kiriting. Tajriba bo‘lmasa '-' yuboring:",
@@ -324,19 +410,22 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Введите одну запись об образовании:",
     },
     "languages": {
-        "uz": "Bitta til va darajasini kiriting (masalan: Ingliz — B2):",
-        "en": "Enter one language and proficiency level (for example: English — C1):",
-        "ru": "Введите один язык и уровень владения (например: Английский — B2):",
+        "uz": "Bitta til va darajasini kiriting:",
+        "en": "Enter one language and proficiency level:",
+        "ru": "Введите один язык и уровень владения:",
     },
     "objective_full_name": {
-        "uz": "Familiya, ism va otangizning ismini to‘liq kiriting:",
-        "en": "Enter your full name, including patronymic:",
-        "ru": "Введите фамилию, имя и отчество полностью:",
+        "uz": (
+            "Ma’lumotnoma tepasiga chiqariladigan F.I.Sh.ni familiya, ism, "
+            "otasining ismi tartibida kiriting:"
+        ),
+        "en": "Enter the full name for the heading: surname, first name, patronymic:",
+        "ru": "Введите Ф.И.О. для заголовка: фамилия, имя, отчество:",
     },
     "objective_position": {
-        "uz": "Hozirgi ish joyingiz va lavozimingizni kiriting:",
-        "en": "Enter your current workplace and position:",
-        "ru": "Укажите текущее место работы и должность:",
+        "uz": "Hozirgi lavozimingizni kiriting (ish joyi nomini yozmang):",
+        "en": "Enter your current position only (do not include the workplace):",
+        "ru": "Укажите только текущую должность (без места работы):",
     },
     "objective_birth_date": {
         "uz": "Tug‘ilgan sanangizni kiriting (kun.oy.yil):",
@@ -359,19 +448,26 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Укажите партийность. Если не состоите в партии, отправьте '-':",
     },
     "objective_education_level": {
-        "uz": "Ma’lumotingiz darajasini kiriting (masalan: oliy):",
-        "en": "Enter your education level (for example: higher education):",
-        "ru": "Укажите уровень образования (например: высшее):",
+        "uz": "Ma’lumotingizni tanlang:",
+        "en": "Choose your education level:",
+        "ru": "Выберите уровень образования:",
     },
     "objective_graduated": {
-        "uz": "Bitta tamomlagan ta’lim muassasangizni yili bilan kiriting:",
-        "en": "Enter one graduated institution with the year:",
-        "ru": "Введите одно оконченное учебное заведение и год:",
+        "uz": (
+            "Shu bosqichdagi ta’lim muassasasi va o‘qigan yillaringizni "
+            "kiriting:"
+        ),
+        "en": (
+            "Enter the institution and study years for this stage:"
+        ),
+        "ru": (
+            "Укажите учебное заведение и годы обучения на этой ступени:"
+        ),
     },
     "objective_specialty": {
-        "uz": "Ma’lumotingiz bo‘yicha mutaxassisligingizni kiriting:",
-        "en": "Enter your specialization by education:",
-        "ru": "Укажите специальность по образованию:",
+        "uz": "Shu ta’lim bo‘yicha mutaxassisligingizni kiriting:",
+        "en": "Enter the specialization for this education:",
+        "ru": "Укажите специальность для этого образования:",
     },
     "objective_degree": {
         "uz": "Ilmiy darajangizni kiriting. Bo‘lmasa '-' yuboring:",
@@ -384,9 +480,9 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Укажите учёное звание. Если нет, отправьте '-':",
     },
     "objective_languages": {
-        "uz": "Bitta biladigan chet tilingizni kiriting:",
-        "en": "Enter one foreign language you know:",
-        "ru": "Введите один иностранный язык, которым владеете:",
+        "uz": "Bitta chet tili va bilish darajangizni kiriting:",
+        "en": "Enter one foreign language and proficiency level:",
+        "ru": "Введите один иностранный язык и уровень владения:",
     },
     "objective_awards": {
         "uz": "Davlat mukofotlaringizni kiriting. Bo‘lmasa '-' yuboring:",
@@ -404,18 +500,29 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Введите один период трудовой деятельности:",
     },
     "objective_relatives": {
-        "uz": (
-            "Bitta yaqin qarindoshingizni quyidagicha yozing:\n"
-            "Qarindoshligi | F.I.Sh. | tug‘ilgan yili va joyi | ish joyi va lavozimi | manzili"
-        ),
-        "en": (
-            "Enter one close relative in this format:\n"
-            "Relationship | Full name | birth year and place | workplace and position | address"
-        ),
-        "ru": (
-            "Укажите одного близкого родственника в формате:\n"
-            "Родство | Ф.И.О. | год и место рождения | место работы и должность | адрес"
-        ),
+        "uz": "Sizda bor yaqin qarindoshlarni tugmalar orqali belgilang:",
+        "en": "Select the close relatives you have using the buttons:",
+        "ru": "Выберите имеющихся близких родственников кнопками:",
+    },
+    "objective_relative_name": {
+        "uz": "{relationship}ning familiyasi, ismi va otasining ismini kiriting:",
+        "en": "Enter your {relationship}'s full name:",
+        "ru": "Введите Ф.И.О. ({relationship}):",
+    },
+    "objective_relative_birth": {
+        "uz": "{relationship}ning tug‘ilgan sanasi va joyini kiriting:",
+        "en": "Enter your {relationship}'s date and place of birth:",
+        "ru": "Введите дату и место рождения ({relationship}):",
+    },
+    "objective_relative_work": {
+        "uz": "{relationship}ning ish joyi va lavozimini kiriting:",
+        "en": "Enter your {relationship}'s workplace and position:",
+        "ru": "Введите место работы и должность ({relationship}):",
+    },
+    "objective_relative_address": {
+        "uz": "{relationship}ning yashash manzilini kiriting:",
+        "en": "Enter your {relationship}'s home address:",
+        "ru": "Введите адрес проживания ({relationship}):",
     },
 }
 
@@ -469,7 +576,7 @@ PREVIEW_LABELS: dict[Language, dict[str, str]] = {
 
 DOCUMENT_LABELS: dict[Language, dict[str, str]] = {
     "uz": {
-        "profile": "PROFIL",
+        "profile": "O‘ZIM HAQIMDA",
         "skills": "KO‘NIKMALAR",
         "experience": "ISH TAJRIBASI",
         "education": "TA’LIM",
@@ -512,7 +619,7 @@ OBJECTIVE_LABELS: dict[Language, dict[str, str]] = {
         "relatives": "YAQIN QARINDOSHLARI HAQIDA MA’LUMOT",
         "relationship": "Qarindoshligi",
         "relative_name": "Familiyasi, ismi va otasining ismi",
-        "relative_birth": "Tug‘ilgan yili va joyi",
+        "relative_birth": "Tug‘ilgan sanasi va joyi",
         "relative_work": "Ish joyi va lavozimi",
         "relative_address": "Turar joyi",
     },
@@ -535,7 +642,7 @@ OBJECTIVE_LABELS: dict[Language, dict[str, str]] = {
         "relatives": "INFORMATION ABOUT CLOSE RELATIVES",
         "relationship": "Relationship",
         "relative_name": "Full name",
-        "relative_birth": "Birth year and place",
+        "relative_birth": "Date and place of birth",
         "relative_work": "Workplace and position",
         "relative_address": "Address",
     },
@@ -558,7 +665,7 @@ OBJECTIVE_LABELS: dict[Language, dict[str, str]] = {
         "relatives": "СВЕДЕНИЯ О БЛИЗКИХ РОДСТВЕННИКАХ",
         "relationship": "Родство",
         "relative_name": "Фамилия, имя и отчество",
-        "relative_birth": "Год и место рождения",
+        "relative_birth": "Дата и место рождения",
         "relative_work": "Место работы и должность",
         "relative_address": "Адрес",
     },

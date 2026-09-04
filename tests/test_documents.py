@@ -3,6 +3,7 @@ from uuid import uuid4
 from zipfile import ZipFile
 
 from app.documents.generator import DocumentGenerator
+from app.services.templates import TEMPLATE_CODES
 
 
 def test_generates_pdf_and_docx(tmp_path) -> None:
@@ -29,7 +30,7 @@ def test_generates_pdf_and_docx(tmp_path) -> None:
 
 
 def test_generates_only_selected_resume_format_and_templates(tmp_path) -> None:
-    for template_code in ("modern", "europass"):
+    for template_code in TEMPLATE_CODES:
         artifacts = DocumentGenerator(tmp_path).generate(
             uuid4(),
             {
@@ -88,6 +89,7 @@ def test_generates_objective_docx(tmp_path) -> None:
             "objective_full_name": "Ali Valiyev Olimjon o‘g‘li",
             "objective_position": "Example MCHJ direktori",
             "objective_birth_date": "01.01.1990",
+            "objective_party": "-",
             "objective_employment": ["2015–2020 — Mutaxassis"],
             "objective_relatives": ["Otasi | Vali Valiyev | 1960, Toshkent | Nafaqada | Toshkent"],
         },
@@ -97,6 +99,12 @@ def test_generates_objective_docx(tmp_path) -> None:
     assert [artifact.format for artifact in artifacts] == ["docx"]
     assert artifacts[0].path.name == "obyektivka.docx"
     assert artifacts[0].path.stat().st_size > 100
+    with ZipFile(artifacts[0].path) as archive:
+        document_xml = archive.read("word/document.xml").decode()
+    assert "MA’LUMOTNOMA" in document_xml
+    assert "yo‘q" in document_xml
+    assert "MEHNAT FAOLIYATI" in document_xml
+    assert 'w:orient="landscape"' not in document_xml
 
 
 def test_generates_objective_pdf(tmp_path) -> None:
@@ -115,3 +123,4 @@ def test_generates_objective_pdf(tmp_path) -> None:
     )
     assert [artifact.format for artifact in artifacts] == ["pdf"]
     assert artifacts[0].path.name == "obyektivka.pdf"
+    assert "obyektivka" in artifacts[0].path.name

@@ -7,6 +7,7 @@ def test_default_command_menu_contains_supported_commands() -> None:
         "start",
         "help",
         "new",
+        "stop",
         "my_cv",
         "delete_me",
     ]
