@@ -32,6 +32,8 @@ from app.bot.keyboards import (
     objective_education_level_keyboard,
     output_format_keyboard,
     photo_navigation_keyboard,
+    portfolio_ready_keyboard,
+    portfolio_sections_keyboard,
     portfolio_template_keyboard,
     question_navigation_keyboard,
     relative_label,
@@ -433,11 +435,29 @@ async def coming_soon_callback(callback: CallbackQuery, session: AsyncSession) -
                 text("portfolio_example", user.language_code),
             )
             await callback.message.answer(
-                text("portfolio_choose_template", user.language_code),
-                reply_markup=portfolio_template_keyboard(user.language_code),
+                "Namuna tushunarlimi, tayyormisiz?",
+                reply_markup=portfolio_ready_keyboard(user.language_code),
             )
         return
     await callback.answer(text("coming_soon", user.language_code), show_alert=True)
+
+
+@router.callback_query(F.data.startswith("portfolio-ready:"))
+async def portfolio_ready_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    user = await _user(session, callback.from_user)
+    await callback.answer()
+    if callback.message is None:
+        return
+    if callback.data == "portfolio-ready:again":
+        await callback.message.answer(
+            text("portfolio_example", user.language_code),
+            reply_markup=portfolio_ready_keyboard(user.language_code),
+        )
+        return
+    await callback.message.answer(
+        text("portfolio_choose_template", user.language_code),
+        reply_markup=portfolio_template_keyboard(user.language_code),
+    )
 
 
 @router.callback_query(F.data.startswith("portfolio-template:"))
@@ -449,12 +469,76 @@ async def portfolio_template_callback(callback: CallbackQuery, session: AsyncSes
         return
     user = await _user(session, callback.from_user)
     draft = await create_resume(session, user.id, document_type="portfolio")
-    await update_draft_flow(session, draft, data_updates={"portfolio_template": template_code})
+    await update_draft_flow(
+        session,
+        draft,
+        data_updates={"portfolio_template": template_code},
+        status="portfolio_sections",
+        current_step="portfolio_sections",
+    )
     await callback.answer()
     if callback.message:
         await callback.message.answer(
-            "Portfolio uchun ma’lumotlarni kiriting. Avval ism va familiyangizni yozing:"
+            "Endi bo‘limlarni birma-bir to‘ldiring. Avval Profile bo‘limidan boshlang:",
+            reply_markup=portfolio_sections_keyboard(user.language_code),
         )
+
+
+_PORTFOLIO_SECTION_PROMPTS = {
+    "profile": "Profile: ism-familiya, kasbiy lavozim va qisqa tagline yozing.",
+    "about": "About: tajribangiz, yo‘nalishingiz va maqsadingiz haqida 2–4 jumla yozing.",
+    "skills": "Skills: asosiy ko‘nikmalaringizni vergul bilan ajrating.",
+    "experience": "Experience: ish joyi, lavozim va natijalarni yozing (har biri yangi qatorda).",
+    "education": "Education: ta’lim muassasasi, yo‘nalish va yillarni yozing.",
+    "contact": "Contact: email, telefon va joylashuvingizni yozing.",
+    "projects": "Projects: loyiha nomi, nima qilgani va GitHub/live demo linkini yozing.",
+    "certificates": "Certificates: sertifikat nomi, tashkilot va linkini yozing.",
+    "publications": "Publications: maqola yoki nashr nomi va linkini yozing.",
+    "languages": "Languages: til va darajani yozing (masalan: English — B2).",
+    "links": "Links & Profiles: GitHub, LinkedIn, Telegram yoki shaxsiy saytingiz linklarini "
+    "yozing.",
+    "achievements": "Achievements / Vlog: yutuq yoki vlog nomi, tavsifi va rasm/video "
+    "linkini yozing.",
+}
+
+
+@router.callback_query(F.data.startswith("portfolio-section:"))
+async def portfolio_section_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    if callback.data is None:
+        return
+    section = callback.data.rsplit(":", 1)[-1]
+    if section not in _PORTFOLIO_SECTION_PROMPTS:
+        return
+    user = await _user(session, callback.from_user)
+    draft = await get_current_resume(session, user.id)
+    if draft is None or draft.data.get("document_type") != "portfolio":
+        await callback.answer(text("start_first", user.language_code), show_alert=True)
+        return
+    await update_draft_flow(
+        session,
+        draft,
+        status="collecting",
+        current_step="portfolio_section",
+        data_updates={"portfolio_active_section": section},
+    )
+    await callback.answer()
+    if callback.message:
+        await callback.message.answer(_PORTFOLIO_SECTION_PROMPTS[section])
+
+
+@router.callback_query(F.data == "portfolio:finish")
+async def portfolio_finish_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    user = await _user(session, callback.from_user)
+    draft = await get_current_resume(session, user.id)
+    if draft is None or draft.data.get("document_type") != "portfolio":
+        await callback.answer(text("start_first", user.language_code), show_alert=True)
+        return
+    draft = await update_draft_flow(
+        session, draft, status="review", current_step="portfolio_sections"
+    )
+    await callback.answer()
+    if callback.message:
+        await _send_preview(callback.message, draft.data, user.language_code)
 
 
 async def _show_last(message: Message, session: AsyncSession, telegram_user: TelegramUser) -> None:
@@ -829,6 +913,51 @@ async def collect_text(
             await status_message.edit_text(f"✅ Portfolio tayyor va Netlify’da joylandi:\n{url}")
         except PortfolioDeploymentError as error:
             await status_message.edit_text(f"❌ {error}\nQayta Netlify token yuboring.")
+        return
+    if (
+        draft is not None
+        and draft.status == "collecting"
+        and draft.current_step == "portfolio_section"
+    ):
+        section = str(draft.data.get("portfolio_active_section", ""))
+        if not section:
+            return
+        updates: dict[str, object] = {}
+        lines = [line.strip() for line in raw_answer.splitlines() if line.strip()]
+        if section == "profile":
+            updates = {"full_name": lines[0] if lines else raw_answer.strip()}
+            if len(lines) > 1:
+                updates["job_title"] = lines[1]
+            if len(lines) > 2:
+                updates["portfolio_tagline"] = " ".join(lines[2:])
+        elif section == "about":
+            updates = {"summary": raw_answer.strip()}
+        elif section == "skills":
+            updates = {"skills": [item.strip() for item in raw_answer.split(",") if item.strip()]}
+        elif section in {"experience", "education", "languages"}:
+            updates = {section: lines}
+        elif section == "contact":
+            updates = {"email": lines[0] if lines else raw_answer.strip()}
+            if len(lines) > 1:
+                updates["phone"] = lines[1]
+            if len(lines) > 2:
+                updates["location"] = lines[2]
+        else:
+            custom = list(draft.data.get("portfolio_sections", []))
+            custom.append({"title": section.title(), "content": raw_answer.strip()})
+            updates = {"portfolio_sections": custom}
+        draft = await update_draft_flow(
+            session,
+            draft,
+            data_updates=updates,
+            remove_keys=("portfolio_active_section",),
+            status="portfolio_sections",
+            current_step="portfolio_sections",
+        )
+        await message.answer(
+            "Bo‘lim saqlandi. Keyingi bo‘limni tanlang yoki Tayyor tugmasini bosing.",
+            reply_markup=portfolio_sections_keyboard(user.language_code),
+        )
         return
     step = STEP_BY_KEY.get(draft.current_step) if draft is not None else None
     current_question = step_prompt(step.key, user.language_code) if step else None

@@ -52,6 +52,53 @@ def portfolio_template_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
     )
 
 
+def portfolio_sections_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    labels = {
+        "uz": (
+            ("profile", "👤 Profile"), ("about", "📝 About"), ("skills", "🛠 Skills"),
+            ("experience", "💼 Experience"), ("education", "🎓 Education"),
+            ("contact", "📬 Contact"), ("projects", "🚀 Projects"),
+            ("certificates", "🏅 Certificates"), ("publications", "📚 Publications"),
+            ("languages", "🌐 Languages"), ("links", "🔗 Links & Profiles"),
+            ("achievements", "🏆 Achievements / Vlog"),
+        ),
+        "en": (
+            ("profile", "👤 Profile"), ("about", "📝 About"), ("skills", "🛠 Skills"),
+            ("experience", "💼 Experience"), ("education", "🎓 Education"),
+            ("contact", "📬 Contact"), ("projects", "🚀 Projects"),
+            ("certificates", "🏅 Certificates"), ("publications", "📚 Publications"),
+            ("languages", "🌐 Languages"), ("links", "🔗 Links & Profiles"),
+            ("achievements", "🏆 Achievements / Vlog"),
+        ),
+        "ru": (
+            ("profile", "👤 Профиль"), ("about", "📝 Обо мне"), ("skills", "🛠 Навыки"),
+            ("experience", "💼 Опыт"), ("education", "🎓 Образование"),
+            ("contact", "📬 Контакты"), ("projects", "🚀 Проекты"),
+            ("certificates", "🏅 Сертификаты"), ("publications", "📚 Публикации"),
+            ("languages", "🌐 Языки"), ("links", "🔗 Ссылки и профили"),
+            ("achievements", "🏆 Достижения / Влог"),
+        ),
+    }[normalize_language(language)]
+    rows = [
+        [InlineKeyboardButton(text=label, callback_data=f"portfolio-section:{code}")]
+        for code, label in labels
+    ]
+    rows.append([InlineKeyboardButton(text="✅ Tayyor / Finish", callback_data="portfolio:finish")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def portfolio_ready_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    labels = {
+        "uz": ("✅ Ha, boshlaymiz", "🔁 Namunani qayta ko‘rish"),
+        "en": ("✅ Yes, start", "🔁 Show example again"),
+        "ru": ("✅ Да, начать", "🔁 Показать пример"),
+    }[normalize_language(language)]
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=labels[0], callback_data="portfolio-ready:yes")],
+        [InlineKeyboardButton(text=labels[1], callback_data="portfolio-ready:again")],
+    ])
+
+
 def cv_template_keyboard(
     language: str = "uz",
 ) -> InlineKeyboardMarkup | ReplyKeyboardMarkup:

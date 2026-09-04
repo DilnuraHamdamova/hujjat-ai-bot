@@ -22,6 +22,17 @@ def render_portfolio(data: dict[str, object]) -> str:
     skills = data.get("skills", [])
     skills_html = "".join(f"<li>{escape(str(item))}</li>" for item in skills if str(item).strip()) if isinstance(skills, list) else ""
     projects = data.get("experience", [])
+    custom_sections = data.get("portfolio_sections", [])
+    custom_html = (
+        "".join(
+            f"<section><h2>{escape(str(item.get('title', '')))}</h2>"
+            f"<p>{escape(str(item.get('content', '')))}</p></section>"
+            for item in custom_sections
+            if isinstance(item, dict) and item.get("content")
+        )
+        if isinstance(custom_sections, list)
+        else ""
+    )
     themes = {
         "minimal": ("#111827", "#374151", "#ffffff"),
         "modern": ("#6d5dfc", "#18202a", "#f7f8fc"),
@@ -37,6 +48,7 @@ def render_portfolio(data: dict[str, object]) -> str:
 <section><h2>About me</h2><p>{esc("summary")}</p></section>
 {f'<section><h2>Skills</h2><ul>{skills_html}</ul></section>' if skills_html else ''}
 {f'<section><h2>Experience</h2>{cards}</section>' if cards else ''}
+{custom_html}
 <section><h2>Contact</h2><p>{esc("email")}</p></section></body></html>'''
 
 
