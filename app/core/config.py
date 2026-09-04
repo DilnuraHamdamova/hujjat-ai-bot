@@ -22,14 +22,16 @@ class Settings(BaseSettings):
     webhook_base_url: str = ""
     webhook_path: str = "/telegram/webhook"
     webhook_secret: SecretStr = Field(default=SecretStr("change-this-secret"))
+    template_webapp_url: str = ""
 
     database_url: str = "postgresql+asyncpg://cvbot:cvbot@localhost:5432/cvbot"
     redis_url: str = "redis://localhost:6379/0"
     storage_dir: Path = Path("storage")
 
-    openai_api_key: SecretStr = Field(default=SecretStr(""))
-    openai_text_model: str = "gpt-5.6-luna"
-    openai_transcribe_model: str = "gpt-transcribe"
+    gemini_api_key: SecretStr = Field(default=SecretStr(""))
+    gemini_model: str = "gemini-3.6-flash"
+    gemini_router_model: str = "gemini-3.5-flash-lite"
+    gemini_voice_model: str = "gemini-3.5-transcribe"
 
     @property
     def webhook_url(self) -> str:

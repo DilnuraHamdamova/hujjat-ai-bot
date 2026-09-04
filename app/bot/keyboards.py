@@ -1,7 +1,14 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+    WebAppInfo,
+)
 
+from app.core.config import get_settings
 from app.services.localization import OBJECTIVE_LABELS, PREVIEW_LABELS, Language, normalize_language
-from app.services.resume_flow import steps_for
+from app.services.resume_flow import STEP_BY_KEY, steps_for
 
 
 def language_keyboard() -> InlineKeyboardMarkup:
@@ -34,14 +41,29 @@ def document_type_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
     )
 
 
-def cv_template_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+def cv_template_keyboard(
+    language: str = "uz",
+) -> InlineKeyboardMarkup | ReplyKeyboardMarkup:
     locale = normalize_language(language)
     back = {"uz": "⬅️ Ortga", "en": "⬅️ Back", "ru": "⬅️ Назад"}[locale]
+    webapp_url = get_settings().template_webapp_url.strip()
+    if webapp_url:
+        open_gallery = {
+            "uz": "🎨 Shablonlarni ko‘rish va tanlash",
+            "en": "🎨 View and choose a template",
+            "ru": "🎨 Посмотреть и выбрать шаблон",
+        }[locale]
+        return ReplyKeyboardMarkup(
+            keyboard=[[KeyboardButton(text=open_gallery, web_app=WebAppInfo(url=webapp_url))]],
+            resize_keyboard=True,
+            one_time_keyboard=True,
+            input_field_placeholder=open_gallery,
+        )
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="📘 Classic", callback_data="template:classic")],
-            [InlineKeyboardButton(text="✨ Modern", callback_data="template:modern")],
-            [InlineKeyboardButton(text="🇪🇺 Europass", callback_data="template:europass")],
+            [InlineKeyboardButton(text="📘 Classic", callback_data="template-family:classic")],
+            [InlineKeyboardButton(text="✨ Modern", callback_data="template-family:modern")],
+            [InlineKeyboardButton(text="🇪🇺 Europass", callback_data="template-family:europass")],
             [InlineKeyboardButton(text=back, callback_data="document:choose")],
         ]
     )
@@ -64,6 +86,31 @@ def europass_template_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
     )
 
 
+def template_variant_keyboard(family: str, language: str = "uz") -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    family_names = {
+        "classic": "Classic",
+        "modern": {"uz": "Zamonaviy", "en": "Modern", "ru": "Современный"}[locale],
+        "europass": "Europass",
+    }
+    selected_family = family if family in family_names else "classic"
+    back = {"uz": "⬅️ Turlarga qaytish", "en": "⬅️ Back to styles", "ru": "⬅️ К стилям"}[
+        locale
+    ]
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=f"{family_names[selected_family]} {number}",
+                    callback_data=f"template:{selected_family}_{number}",
+                )
+            ]
+            for number in range(1, 4)
+        ]
+        + [[InlineKeyboardButton(text=back, callback_data="document:cv")]]
+    )
+
+
 def output_format_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -71,6 +118,229 @@ def output_format_keyboard() -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text="📘 Word (DOCX)", callback_data="format:docx")],
         ]
     )
+
+
+def objective_education_level_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    choices: dict[Language, tuple[tuple[str, str], ...]] = {
+        "uz": (
+            ("higher", "Oliy"),
+            ("incomplete_higher", "Tugallanmagan oliy"),
+            ("secondary_special", "O‘rta maxsus"),
+            ("secondary", "O‘rta"),
+        ),
+        "en": (
+            ("higher", "Higher education"),
+            ("incomplete_higher", "Incomplete higher"),
+            ("secondary_special", "Specialized secondary"),
+            ("secondary", "Secondary"),
+        ),
+        "ru": (
+            ("higher", "Высшее"),
+            ("incomplete_higher", "Незаконченное высшее"),
+            ("secondary_special", "Среднее специальное"),
+            ("secondary", "Среднее"),
+        ),
+    }
+    back = {"uz": "⬅️ Orqaga", "en": "⬅️ Back", "ru": "⬅️ Назад"}[locale]
+    rows = [
+        [
+            InlineKeyboardButton(
+                text=label,
+                callback_data=f"objective-education:{code}",
+            )
+        ]
+        for code, label in choices[locale]
+    ]
+    rows.append(
+        [
+            InlineKeyboardButton(
+                text=back,
+                callback_data="flow:back:objective_education_level",
+            )
+        ]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+QUESTION_EXAMPLES: dict[str, dict[Language, str]] = {
+    "full_name": {
+        "uz": "Dilnura Hamdamova",
+        "en": "Dilnura Hamdamova",
+        "ru": "Дилнура Хамдамова",
+    },
+    "job_title": {
+        "uz": "Backend dasturchi",
+        "en": "Backend Developer",
+        "ru": "Backend-разработчик",
+    },
+    "phone": {
+        "uz": "+998 90 123 45 67",
+        "en": "+998 90 123 45 67",
+        "ru": "+998 90 123 45 67",
+    },
+    "email": {
+        "uz": "dilnura@example.com",
+        "en": "dilnura@example.com",
+        "ru": "dilnura@example.com",
+    },
+    "location": {"uz": "Toshkent", "en": "Tashkent", "ru": "Ташкент"},
+    "summary": {
+        "uz": "3 yillik tajribaga ega Java dasturchiman",
+        "en": "Java developer with 3 years of experience",
+        "ru": "Java-разработчик с опытом 3 года",
+    },
+    "skills": {"uz": "Java", "en": "Java", "ru": "Java"},
+    "experience": {
+        "uz": "2023–hozir — Example MCHJ, Java dasturchi",
+        "en": "2023–present — Example LLC, Java Developer",
+        "ru": "2023–н.в. — Example, Java-разработчик",
+    },
+    "education": {
+        "uz": "2021–2025 — TDIU, Xalqaro iqtisodiyot",
+        "en": "2021–2025 — TSUE, International Economics",
+        "ru": "2021–2025 — ТГЭУ, Международная экономика",
+    },
+    "languages": {
+        "uz": "Ingliz tili — B2",
+        "en": "English — B2",
+        "ru": "Английский — B2",
+    },
+    "objective_full_name": {
+        "uz": "Abdullayev Botir Bahodirovich",
+        "en": "Botir Abdullayev Bahodirovich",
+        "ru": "Абдуллаев Ботир Баходирович",
+    },
+    "objective_position": {
+        "uz": "Dasturchi",
+        "en": "Software Developer",
+        "ru": "Программист",
+    },
+    "objective_birth_date": {
+        "uz": "20.08.1985",
+        "en": "20.08.1985",
+        "ru": "20.08.1985",
+    },
+    "objective_birth_place": {
+        "uz": "Sirdaryo viloyati, Guliston shahri",
+        "en": "Gulistan, Syrdarya region",
+        "ru": "г. Гулистан, Сырдарьинская область",
+    },
+    "objective_nationality": {"uz": "o‘zbek", "en": "Uzbek", "ru": "узбек"},
+    "objective_party": {"uz": "yo‘q", "en": "none", "ru": "нет"},
+    "objective_education_level": {"uz": "Oliy", "en": "Higher education", "ru": "Высшее"},
+    "objective_graduated": {
+        "uz": "TDIU, 2021–2025",
+        "en": "TSUE, 2021–2025",
+        "ru": "ТГЭУ, 2021–2025",
+    },
+    "objective_specialty": {
+        "uz": "Xalqaro iqtisodiyot",
+        "en": "International Economics",
+        "ru": "Международная экономика",
+    },
+    "objective_degree": {
+        "uz": "iqtisodiyot fanlari nomzodi yoki yo‘q",
+        "en": "PhD in Economics or none",
+        "ru": "кандидат экономических наук или нет",
+    },
+    "objective_title": {
+        "uz": "dotsent yoki yo‘q",
+        "en": "Associate Professor or none",
+        "ru": "доцент или нет",
+    },
+    "objective_languages": {
+        "uz": "Ingliz tili — B2",
+        "en": "English — B2",
+        "ru": "Английский — B2",
+    },
+    "objective_awards": {
+        "uz": "«Do‘stlik» ordeni yoki yo‘q",
+        "en": "State award name or none",
+        "ru": "Название госнаграды или нет",
+    },
+    "objective_elected": {
+        "uz": "Tuman Kengashi deputati yoki yo‘q",
+        "en": "District council member or none",
+        "ru": "Депутат районного Кенгаша или нет",
+    },
+    "objective_employment": {
+        "uz": "2021–hozir | TDIU | fakultet dekani",
+        "en": "2021–present | TSUE | Faculty Dean",
+        "ru": "2021–н.в. | ТГЭУ | декан факультета",
+    },
+    "objective_relative_name": {
+        "uz": "Karimov Ali Valiyevich",
+        "en": "Ali Karimov",
+        "ru": "Каримов Али Валиевич",
+    },
+    "objective_relative_birth": {
+        "uz": "20.03.1965, Toshkent shahri",
+        "en": "20.03.1965, Tashkent",
+        "ru": "20.03.1965, Ташкент",
+    },
+    "objective_relative_work": {
+        "uz": "TDIU, professor",
+        "en": "TSUE, professor",
+        "ru": "ТГЭУ, профессор",
+    },
+    "objective_relative_address": {
+        "uz": "Toshkent shahri, Chilonzor tumani",
+        "en": "Tashkent, Chilanzar district",
+        "ru": "Ташкент, Чиланзарский район",
+    },
+}
+
+SKILL_SUGGESTION_VALUES: dict[str, str] = {
+    "java": "Java",
+    "spring": "Spring Boot",
+    "sql": "SQL",
+    "postgresql": "PostgreSQL",
+    "docker": "Docker",
+    "git": "Git",
+    "rest": "REST API",
+    "figma": "Figma",
+    "ux": "UX Research",
+    "prototyping": "Prototyping",
+    "design_systems": "Design Systems",
+    "excel": "Microsoft Excel",
+    "accounting": "Buxgalteriya",
+    "communication": "Communication",
+    "project_management": "Project Management",
+}
+
+
+def suggested_skill_codes(job_title: str) -> tuple[str, ...]:
+    title = job_title.lower()
+    if any(word in title for word in ("java", "backend", "dasturchi", "developer", "programmer")):
+        return ("java", "spring", "sql", "postgresql", "docker", "git", "rest")
+    if any(word in title for word in ("designer", "dizayn", "ux", "ui")):
+        return ("figma", "ux", "prototyping", "design_systems", "git")
+    if any(word in title for word in ("buxgalter", "accountant", "finance")):
+        return ("excel", "accounting", "communication")
+    if any(word in title for word in ("manager", "menejer", "rahbar")):
+        return ("project_management", "communication", "excel", "git")
+    return ("communication", "project_management", "git")
+
+
+def skill_suggestions_keyboard(job_title: str, language: str = "uz") -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    labels = {
+        "uz": "💡 Tavsiya: ",
+        "en": "💡 Suggested: ",
+        "ru": "💡 Совет: ",
+    }
+    rows = [
+        [
+            InlineKeyboardButton(
+                text=f"{labels[locale]}{SKILL_SUGGESTION_VALUES[code]}",
+                callback_data=f"skill:suggest:{code}",
+            )
+        ]
+        for code in suggested_skill_codes(job_title)
+    ]
+    rows.extend(question_navigation_keyboard("skills", locale).inline_keyboard)
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def question_navigation_keyboard(step_key: str, language: str = "uz") -> InlineKeyboardMarkup:
@@ -81,12 +351,99 @@ def question_navigation_keyboard(step_key: str, language: str = "uz") -> InlineK
         "ru": ("⬅️ Назад", "⏭ Пропустить"),
     }
     back_label, skip_label = labels[locale]
+    rows = []
+    navigation = [InlineKeyboardButton(text=back_label, callback_data=f"flow:back:{step_key}")]
+    step = STEP_BY_KEY.get(step_key)
+    if step is None or step.optional:
+        navigation.append(
+            InlineKeyboardButton(text=skip_label, callback_data=f"flow:skip:{step_key}")
+        )
+    rows.append(navigation)
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def education_more_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    labels = {
+        "uz": ("➕ Yana ta’lim qo‘shish", "✅ Davom etish", "⬅️ Orqaga"),
+        "en": ("➕ Add education", "✅ Continue", "⬅️ Back"),
+        "ru": ("➕ Добавить образование", "✅ Продолжить", "⬅️ Назад"),
+    }[locale]
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [
-                InlineKeyboardButton(text=back_label, callback_data=f"flow:back:{step_key}"),
-                InlineKeyboardButton(text=skip_label, callback_data=f"flow:skip:{step_key}"),
-            ]
+            [InlineKeyboardButton(text=labels[0], callback_data="education:add")],
+            [InlineKeyboardButton(text=labels[1], callback_data="education:done")],
+            [InlineKeyboardButton(text=labels[2], callback_data="flow:back")],
+        ]
+    )
+
+
+RELATIVE_LABELS: dict[Language, dict[str, str]] = {
+    "uz": {
+        "father": "Otasi",
+        "mother": "Onasi",
+        "older_brother": "Akasi",
+        "younger_brother": "Ukasi",
+        "older_sister": "Opasi",
+        "younger_sister": "Singlisi",
+    },
+    "en": {
+        "father": "Father",
+        "mother": "Mother",
+        "older_brother": "Older brother",
+        "younger_brother": "Younger brother",
+        "older_sister": "Older sister",
+        "younger_sister": "Younger sister",
+    },
+    "ru": {
+        "father": "Отец",
+        "mother": "Мать",
+        "older_brother": "Старший брат",
+        "younger_brother": "Младший брат",
+        "older_sister": "Старшая сестра",
+        "younger_sister": "Младшая сестра",
+    },
+}
+
+
+def relative_label(code: str, language: str = "uz") -> str:
+    return RELATIVE_LABELS[normalize_language(language)].get(code, code)
+
+
+def relatives_keyboard(selected: list[str], language: str = "uz") -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    buttons = []
+    for code, label in RELATIVE_LABELS[locale].items():
+        marker = "✅" if code in selected else "☑️"
+        buttons.append(
+            InlineKeyboardButton(text=f"{marker} {label}", callback_data=f"relative:toggle:{code}")
+        )
+    rows = [buttons[index : index + 2] for index in range(0, len(buttons), 2)]
+    done = {"uz": "✅ Davom etish", "en": "✅ Continue", "ru": "✅ Продолжить"}[locale]
+    none = {"uz": "⏭ Qarindosh yo‘q", "en": "⏭ None", "ru": "⏭ Нет"}[locale]
+    back = {"uz": "⬅️ Orqaga", "en": "⬅️ Back", "ru": "⬅️ Назад"}[locale]
+    rows.extend(
+        [
+            [InlineKeyboardButton(text=done, callback_data="relative:types:done")],
+            [InlineKeyboardButton(text=none, callback_data="relative:types:none")],
+            [InlineKeyboardButton(text=back, callback_data="flow:back:objective_relatives")],
+        ]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def relative_more_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    add = {"uz": "➕ Yana qo‘shish", "en": "➕ Add another", "ru": "➕ Добавить ещё"}[locale]
+    proceed = {"uz": "✅ Keyingisiga o‘tish", "en": "✅ Next relative", "ru": "✅ Следующий"}[
+        locale
+    ]
+    back = {"uz": "⬅️ Orqaga", "en": "⬅️ Back", "ru": "⬅️ Назад"}[locale]
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=add, callback_data="relative:add_same")],
+            [InlineKeyboardButton(text=proceed, callback_data="relative:next")],
+            [InlineKeyboardButton(text=back, callback_data="flow:back")],
         ]
     )
 
@@ -95,14 +452,22 @@ def photo_navigation_keyboard(
     language: str = "uz", document_type: str = "cv"
 ) -> InlineKeyboardMarkup:
     locale = normalize_language(language)
+    if document_type == "cv":
+        skip_label = {
+            "uz": "⏭ Rasmsiz davom etish",
+            "en": "⏭ Continue without photo",
+            "ru": "⏭ Продолжить без фото",
+        }[locale]
+        return InlineKeyboardMarkup(
+            inline_keyboard=[[InlineKeyboardButton(text=skip_label, callback_data="photo:skip")]]
+        )
     label = {
-        "uz": "⬅️ Shablonlarga qaytish" if document_type == "cv" else "⬅️ Orqaga",
-        "en": "⬅️ Back to templates" if document_type == "cv" else "⬅️ Back",
-        "ru": "⬅️ К шаблонам" if document_type == "cv" else "⬅️ Назад",
+        "uz": "⬅️ Orqaga",
+        "en": "⬅️ Back",
+        "ru": "⬅️ Назад",
     }[locale]
-    callback_data = "document:cv" if document_type == "cv" else "document:choose"
     return InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text=label, callback_data=callback_data)]]
+        inline_keyboard=[[InlineKeyboardButton(text=label, callback_data="document:choose")]]
     )
 
 

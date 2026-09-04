@@ -1,13 +1,14 @@
 # HujjatAI Telegram Bot
 
 Foydalanuvchidan ma’lumot yig‘ib, PDF yoki DOCX formatida professional CV va
-obyektivka yaratadigan uch tilli Telegram bot. OpenAI integratsiyasi keyingi bosqich
-uchun ajratilgan; hozirgi versiya OpenAI API key’siz ishlaydi.
+obyektivka yaratadigan uch tilli Telegram bot. Savollarga matn yoki ovoz/audio
+orqali javob berish mumkin; audio javoblarni Gemini matnga aylantiradi.
 
 ## Hozir ishlaydigan imkoniyatlar
 
 - Telegram polling (local/dev) va webhook (PROD)
 - O‘zbek, ingliz va rus tillari
+- Matn, Telegram voice va audio fayl orqali savollarga javob berish
 - CV, obyektivka, tavsiyanoma va portfolio tanlov menyusi
 - Classic, Modern va Europass uslubidagi CV shablonlari
 - Majburiy 3×4 rasm va qarindoshlar jadvali bilan obyektivka
@@ -23,9 +24,9 @@ uchun ajratilgan; hozirgi versiya OpenAI API key’siz ishlaydi.
 - `/delete_me` orqali DB va yaratilgan hujjatlarni o‘chirish
 - Docker Compose, healthcheck va Alembic migration
 
-Tavsiyanoma va portfolio tugmalari menyuda mavjud, lekin hozircha “tez orada”
-holatida. Tavsiyanoma AI orqali, portfolio esa keyingi Netlify integratsiyasi orqali
-ishlaydi.
+Tavsiyanoma tugmasi hozircha “tez orada” holatida. Portfolio oqimi esa bot ichida
+ma’lumotlarni yig‘adi, self-contained HTML yaratadi va foydalanuvchining Netlify Personal
+Access Token’i bilan yangi saytga deploy qilib, live URL’ni qaytaradi. Token saqlanmaydi.
 
 ## Arxitektura
 
@@ -37,12 +38,13 @@ FastAPI + aiogram ─── PostgreSQL
    │
    ├── Jinja2 + WeasyPrint ── CV/obyektivka PDF
    ├── python-docx ────────── CV/obyektivka DOCX
-   └── Redis + Celery ─────── kelajakdagi audio/AI tasklar
+   ├── Gemini ─────────────── voice/audio transkripsiya
+   └── Redis + Celery ─────── background tasklar
 ```
 
 ## Hozir qaysi API key kerak?
 
-Faqat `BOT_TOKEN` kerak. Uni Telegram’dagi `@BotFather` orqali oling:
+`BOT_TOKEN` botni ishlatish uchun, `GEMINI_API_KEY` esa voice/audio javoblar uchun kerak. Telegram tokenini `@BotFather` orqali oling:
 
 1. `@BotFather`ni oching.
 2. `/newbot` yuboring.
@@ -50,7 +52,7 @@ Faqat `BOT_TOKEN` kerak. Uni Telegram’dagi `@BotFather` orqali oling:
 4. Berilgan tokenni nusxalang.
 5. Tokenni hech kimga yubormang va Git’ga commit qilmang.
 
-`OPENAI_API_KEY` hozir bo‘sh qoladi.
+`GEMINI_API_KEY` bo‘sh qolsa, text funksiyalar ishlaydi, faqat voice/audio transkripsiya o‘chiriladi.
 
 ## Docker bilan ishga tushirish
 
@@ -64,7 +66,10 @@ cp .env.example .env
 ```env
 BOT_TOKEN=BotFather-bergan-token
 BOT_MODE=polling
-OPENAI_API_KEY=
+GEMINI_API_KEY=Google-AI-Studio-bergan-kalit
+GEMINI_MODEL=gemini-3.6-flash
+GEMINI_ROUTER_MODEL=gemini-3.5-flash-lite
+GEMINI_VOICE_MODEL=gemini-3.5-transcribe
 ```
 
 Keyin:
@@ -123,14 +128,16 @@ WEBHOOK_SECRET=uzun-tasodifiy-secret
 Reverse proxy faqat `8000` portdagi app’ga trafik uzatadi. Telegram tokeni, webhook
 secret va database internetga ochilmaydi.
 
-## OpenAI keyin qanday ulanadi?
+## Gemini integratsiyasi
 
-`app/services/ai.py` ichidagi `AIProvider` contract o‘zgarmaydi. Keyingi bosqichda
-`OpenAIProvider` qo‘shilib:
+`app/services/ai.py` ichidagi `GeminiProvider`:
 
-- `transcribe()` — Telegram voice’ni matnga aylantiradi;
-- `extract_resume()` — bitta erkin matndan strukturali ma’lumot oladi;
-- yetishmagan majburiy maydonlarni aniqlab, foydalanuvchidan so‘raydi;
-- foydalanuvchi mazmunidan tavsiyanoma yaratadi.
+- Telegram voice va audio faylni past kechikish uchun maxsus
+  `gemini-3.5-transcribe` modeli orqali matnga aylantiradi;
+- joriy savol va foydalanuvchi tilini transkripsiya konteksti sifatida uzatadi;
+- tushunilgan matnni oddiy text javob bilan bir xil validatsiya va saqlash oqimiga beradi;
+- `extract_resume()` orqali erkin matndan strukturali CV ma’lumotini ajrata oladi;
+- API kalit bo‘lmasa text-only fallbackni saqlaydi.
 
-Bot handlerlari va hujjat generatorini qayta yozish talab qilinmaydi.
+Audio hajmi 20 MB bilan cheklangan. Vaqtinchalik audio fayllar transkripsiyadan
+keyin avtomatik o‘chiriladi.

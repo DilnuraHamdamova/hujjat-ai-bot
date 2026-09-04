@@ -1,49 +1,9 @@
-<!doctype html>
-<html lang="{{ language }}">
-<head>
-  <meta charset="utf-8">
-  <style>
-    @page { size: A4; margin: 0; }
-    * { box-sizing: border-box; }
-    body { margin: 0; color: #283747; font: 10pt/1.45 "DejaVu Sans", Arial, sans-serif; }
-    body.variant-2 aside { background: #f1f3f5; color: #283747; }
-    body.variant-2 h2 { color: #164f86; }
-    body.variant-3 .page { display: block; }
-    body.variant-3 aside { color: #283747; background: #fff; border-bottom: 4px solid #164f86; padding: 12mm 15mm 8mm; }
-    body.variant-3 aside .photo { float: right; margin: 0; }
-    body.variant-3 aside h1 { display: inline-block; margin-top: 8mm; }
-    body.variant-3 main { padding: 10mm 15mm; }
-    .page { display: grid; grid-template-columns: 31% 69%; min-height: 297mm; }
-    aside { color: white; background: #164f86; padding: 22mm 11mm; }
-    aside h1 { font-size: 22pt; line-height: 1.15; margin: 0 0 8px; }
-    .photo { display: block; width: 34mm; height: 44mm; object-fit: cover; border: 2px solid #d7e9fa; border-radius: 4px; margin: 0 auto 12mm; }
-    aside .role { color: #d7e9fa; font-size: 12pt; margin-bottom: 20px; }
-    aside p { overflow-wrap: anywhere; margin: 0 0 7px; }
-    main { padding: 20mm 15mm; }
-    h2 { color: #164f86; border-bottom: 1px solid #9db9d3; font-size: 11.5pt; letter-spacing: .04em; margin: 16px 0 8px; padding-bottom: 3px; }
-    p { margin: 0 0 8px; }
-    ul { margin: 0; padding-left: 18px; }
-    li { margin-bottom: 5px; }
-  </style>
-</head>
-<body class="{% if template_code == 'europass_2' %}variant-2{% elif template_code == 'europass_3' %}variant-3{% endif %}">
-  <div class="page">
-    <aside>
-      {% if photo_uri %}<img class="photo" src="{{ photo_uri }}">{% endif %}
-      <h1>{{ resume.full_name or "CV" }}</h1>
-      {% if resume.job_title %}<div class="role">{{ resume.job_title }}</div>{% endif %}
-      {% if resume.phone %}<p>{{ resume.phone }}</p>{% endif %}
-      {% if resume.email %}<p>{{ resume.email }}</p>{% endif %}
-      {% if resume.location %}<p>{{ resume.location }}</p>{% endif %}
-      {% if resume.skills %}<h2 style="color:white;border-color:#82a8ca">{{ labels.skills }}</h2><ul>{% for item in resume.skills %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-      {% if resume.languages %}<h2 style="color:white;border-color:#82a8ca">{{ labels.languages }}</h2><ul>{% for item in resume.languages %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-    </aside>
-    <main>
-      {% if resume.summary %}<h2>{{ labels.profile }}</h2><p>{{ resume.summary }}</p>{% endif %}
-      {% if resume.experience %}<h2>{{ labels.experience }}</h2><ul>{% for item in resume.experience %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-      {% if resume.education %}<h2>{{ labels.education }}</h2><ul>{% for item in resume.education %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
-      {% for section in custom_sections %}{% if section.title and section.content %}<h2>{{ section.title }}</h2><p>{{ section.content }}</p>{% endif %}{% endfor %}
-    </main>
-  </div>
-</body>
-</html>
+<!doctype html><html lang="{{ language }}"><head><meta charset="utf-8"><style>
+@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;color:#27323a;font:8.7pt/1.38 Arial,"DejaVu Sans",sans-serif}.page{min-height:297mm}.logo{display:block;width:43mm;height:auto}h1,h2,p{margin-top:0}ul{padding-left:5mm}li{margin-bottom:1.2mm}
+.v1{margin:5mm;border:3mm solid #8eb9df;padding:10mm}.v1 header{min-height:42mm;border-bottom:1px solid #c9d6df}.v1 .logo{float:right}.v1 .photo{float:left;width:29mm;height:29mm;border-radius:50%;object-fit:cover;margin-right:7mm}.v1 h1{color:#16649a;font-size:16pt;padding-top:6mm}.v1 .role{color:#16649a}.v1 .contact{font-size:7.7pt;margin-top:2mm}.v1 h2,.v3 h2{color:#12649b;border-bottom:1px solid #bacbd6;font-size:10pt;margin:5mm 0 2mm}.v1 p,.v1 li{font-size:8.2pt}
+.v2{display:grid;grid-template-columns:34% 66%;padding-right:8mm}.v2 aside{background:#f2f2f2;padding:14mm 8mm;min-height:297mm}.v2 .photo{display:block;width:34mm;height:34mm;border-radius:50%;object-fit:cover;margin:4mm auto}.v2 aside h1{text-align:center;font-size:18pt}.v2 aside h2{font-size:9pt;margin:7mm 0 2mm}.v2 aside p{font-size:8pt}.v2 main{padding:8mm 8mm}.v2 .logo{text-align:right;margin-bottom:7mm}.v2 main h2{font-size:12pt;font-weight:400;margin:6mm 0 2mm}.timeline{border-left:2px solid #175daf;padding-left:5mm}.timeline p{position:relative}.timeline p:before{content:'';position:absolute;width:3mm;height:3mm;border-radius:50%;background:#175daf;left:-6.6mm;top:1mm}
+.skill-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1mm 6mm;padding-left:4mm}.skill-grid li{margin:0}.v2 main h2{color:#164f86;font-weight:700;border-bottom:1px solid #b6c9d8;padding-bottom:1mm}.v3 h2{color:#164f86}
+.v3{padding:10mm 14mm}.v3 header{background:#f4f4f4;padding:6mm;border-bottom:1px solid #ccc;min-height:38mm}.v3 .photo{float:left;width:27mm;height:27mm;border-radius:50%;object-fit:cover;margin-right:6mm}.v3 .logo{float:right}.v3 h1{font-size:16pt;padding-top:2mm}.v3 .contact{font-size:7.5pt}.v3 h2{color:#111;border-color:#888;font-size:9pt}.v3 p,.v3 li{font-size:7.7pt}.clear{clear:both}
+</style></head><body><div class="page {% if template_code == 'europass_2' %}v2{% elif template_code == 'europass_3' %}v3{% else %}v1{% endif %}">
+{% if template_code == 'europass_2' %}<aside>{% if photo_uri %}<img class="photo" src="{{ photo_uri }}">{% endif %}<h1>{{ resume.full_name or 'CV' }}</h1><p><strong>{{ resume.job_title or '' }}</strong></p>{% if resume.phone %}<h2>PHONE</h2><p>{{ resume.phone }}</p>{% endif %}{% if resume.email %}<h2>EMAIL</h2><p>{{ resume.email }}</p>{% endif %}{% if resume.location %}<h2>ADDRESS</h2><p>{{ resume.location }}</p>{% endif %}</aside><main><img class="logo" src="../assets/europass-logo.svg" alt="Europass">{% if resume.summary %}<h2>{{ labels.profile }}</h2><p>{{ resume.summary }}</p>{% endif %}{% if resume.education %}<h2>{{ labels.education|upper }}</h2><div class="timeline">{% for x in resume.education %}<p><strong>{{ x }}</strong></p>{% endfor %}</div>{% endif %}{% if resume.experience %}<h2>{{ labels.experience|upper }}</h2><div class="timeline">{% for x in resume.experience %}<p><strong>{{ x }}</strong></p>{% endfor %}</div>{% endif %}{% if resume.languages %}<h2>{{ labels.languages|upper }}</h2><ul>{% for x in resume.languages %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}{% if resume.skills %}<h2>{{ labels.skills|upper }}</h2><ul class="skill-grid">{% for x in resume.skills %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}</main>
+{% else %}<header><img class="logo" src="../assets/europass-logo.svg" alt="Europass">{% if photo_uri %}<img class="photo" src="{{ photo_uri }}">{% endif %}<h1>{{ resume.full_name or 'CV' }}</h1><div class="role">{{ resume.job_title or '' }}</div><div class="contact">{{ [resume.phone,resume.email,resume.location]|select|join(' · ') }}</div><div class="clear"></div></header>{% if resume.summary %}<h2>{{ labels.profile }}</h2><p>{{ resume.summary }}</p>{% endif %}{% if resume.experience %}<h2>{{ labels.experience|upper }}</h2>{% for x in resume.experience %}<p><strong>{{ x }}</strong></p>{% endfor %}{% endif %}{% if resume.education %}<h2>{{ labels.education|upper }}</h2>{% for x in resume.education %}<p><strong>{{ x }}</strong></p>{% endfor %}{% endif %}{% if resume.skills %}<h2>{{ labels.skills|upper }}</h2><ul class="skill-grid">{% for x in resume.skills %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}{% if resume.languages %}<h2>{{ labels.languages|upper }}</h2><ul>{% for x in resume.languages %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}{% for s in custom_sections %}{% if s.title and s.content %}<h2>{{ s.title|upper }}</h2><p>{{ s.content }}</p>{% endif %}{% endfor %}{% endif %}</div></body></html>

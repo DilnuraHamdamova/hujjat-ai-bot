@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CV shablonlari</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 18px 14px 30px; color: var(--tg-theme-text-color, #17212b); background: var(--tg-theme-bg-color, #f4f6f8); font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    header, main { max-width: 760px; margin: auto; }
+    header { margin-bottom: 16px; }
+    h1 { margin: 0 0 5px; font-size: 23px; }
+    header p { margin: 0; color: var(--tg-theme-hint-color, #6b7280); }
+    .families, .grid { display: grid; gap: 14px; }
+    .family { border: 1px solid rgba(120,130,145,.25); border-radius: 16px; padding: 18px; text-align: left; background: var(--tg-theme-secondary-bg-color, #fff); color: inherit; box-shadow: 0 7px 22px rgba(15,23,42,.08); cursor: pointer; }
+    .family strong { display: block; font-size: 19px; margin-bottom: 3px; }
+    .family span, .description { color: var(--tg-theme-hint-color, #6b7280); font-size: 13px; }
+    .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .back { border: 0; border-radius: 10px; padding: 9px 12px; background: var(--tg-theme-secondary-bg-color, #fff); color: inherit; font: inherit; cursor: pointer; }
+    .toolbar h2 { margin: 0; font-size: 20px; }
+    .card { overflow: hidden; border: 1px solid rgba(120,130,145,.25); border-radius: 17px; background: var(--tg-theme-secondary-bg-color, #fff); box-shadow: 0 7px 22px rgba(15,23,42,.08); }
+    .preview { width: 100%; height: 430px; display: block; object-fit: contain; object-position: top; background: #292c32; }
+    .content { display: flex; align-items: center; gap: 12px; padding: 13px; }
+    .copy { flex: 1; }
+    .copy h3 { margin: 0 0 2px; font-size: 18px; }
+    .choose { border: 0; border-radius: 11px; padding: 11px 16px; color: var(--tg-theme-button-text-color, #fff); background: var(--tg-theme-button-color, #2481cc); font: inherit; font-weight: 700; cursor: pointer; }
+    button:active { transform: scale(.98); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <header><h1>CV shablonini tanlang</h1><p>Avval turini, keyin aynan kerakli 3 dizayndan birini tanlang.</p></header>
+  <main>
+    <section class="families" id="families">
+      <button class="family" data-family="classic"><strong>📄 Classic</strong><span>3 ta klassik va rasmiy shablon</span></button>
+      <button class="family" data-family="modern"><strong>✨ Zamonaviy</strong><span>3 ta zamonaviy shablon</span></button>
+      <button class="family" data-family="europass"><strong>🇪🇺 Europass</strong><span>Europass belgili 3 ta shablon</span></button>
+    </section>
+    <section id="variants" hidden>
+      <div class="toolbar"><button class="back" type="button">⬅️ Orqaga</button><h2 id="family-title"></h2></div>
+      <div class="grid" id="gallery"></div>
+    </section>
+  </main>
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    const names = {classic: "Classic", modern: "Zamonaviy", europass: "Europass"};
+    const descriptions = {
+      classic: ["Sodda bir ustunli", "Qora yon panelli", "Markaziy rasmiy"],
+      modern: ["Yashil yon panelli", "Ko‘k yon panelli", "To‘q ko‘k sarlavhali"],
+      europass: ["Ko‘k ramkali Europass", "Yon panelli Europass", "Ixcham Europass"]
+    };
+    const families = document.getElementById("families");
+    const variants = document.getElementById("variants");
+    const gallery = document.getElementById("gallery");
+    const title = document.getElementById("family-title");
+
+    function showFamily(family) {
+      title.textContent = names[family];
+      gallery.replaceChildren();
+      for (let number = 1; number <= 3; number += 1) {
+        const code = `${family}_${number}`;
+        const card = document.createElement("article");
+        card.className = "card";
+        card.innerHTML = `<img class="preview" src="/webapp/template-previews/${code}.png" alt="${names[family]} ${number}"><div class="content"><div class="copy"><h3>${names[family]} ${number}</h3><div class="description">${descriptions[family][number - 1]}</div></div><button class="choose" type="button">Tanlash</button></div>`;
+        card.querySelector(".choose").addEventListener("click", () => {
+          tg.sendData(JSON.stringify({action: "select_template", template_code: code}));
+          tg.close();
+        });
+        gallery.appendChild(card);
+      }
+      families.hidden = true;
+      variants.hidden = false;
+      window.scrollTo({top: 0, behavior: "smooth"});
+    }
+
+    document.querySelectorAll(".family").forEach(button => button.addEventListener("click", () => showFamily(button.dataset.family)));
+    document.querySelector(".back").addEventListener("click", () => {
+      variants.hidden = true;
+      families.hidden = false;
+      window.scrollTo({top: 0, behavior: "smooth"});
+    });
+  </script>
+</body>
+</html>

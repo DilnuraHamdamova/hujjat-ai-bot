@@ -54,6 +54,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         with contextlib.suppress(asyncio.CancelledError):
             await polling_task
     await bot.session.close()
+    await dispatcher["ai_provider"].aclose()
     await engine.dispose()
 
 
