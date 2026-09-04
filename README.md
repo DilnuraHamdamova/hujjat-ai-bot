@@ -91,6 +91,30 @@ docker compose down
 Volume’dagi database ma’lumotlari saqlanib qoladi. Ularni o‘chirish uchun `down -v`
 ishlatmang, agar barcha ma’lumotni ataylab yo‘qotmoqchi bo‘lmasangiz.
 
+## Production’ga tegmasdan local test qilish
+
+BotFather’dan alohida test bot oching va test sozlamalarini `.env.local` fayliga yozing:
+
+```env
+BOT_TOKEN=test-bot-token
+BOT_MODE=polling
+GEMINI_API_KEY=your-gemini-key
+TEMPLATE_WEBAPP_URL=
+DATABASE_URL=postgresql+asyncpg://cvbot:cvbot@postgres:5432/cvbot
+REDIS_URL=redis://redis:6379/0
+```
+
+Local botni alohida Compose project sifatida ishga tushiring:
+
+```bash
+docker compose --project-name cvbot-local --env-file .env.local up --build -d
+docker compose --project-name cvbot-local --env-file .env.local logs -f app
+```
+
+Bu production serverdagi botga tegmaydi. Feature tayyor bo‘lgach kodni serverga
+ko‘chirib, serverda `sudo docker compose up --build -d` bajaring. Bir vaqtning
+o‘zida production bot tokeni bilan local pollingni ishga tushirmang.
+
 ## IntelliJ IDEA’da ochish
 
 `File → Open` orqali quyidagi papkani tanlang:

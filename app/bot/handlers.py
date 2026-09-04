@@ -75,6 +75,8 @@ from app.services.ai import (
     AIProvider,
     AIProviderUnavailableError,
     AIResponseError,
+    AssistantDecision,
+    local_message_decision,
 )
 from app.services.localization import normalize_language, step_prompt, text
 from app.services.portfolio import PortfolioDeploymentError, deploy_to_netlify, render_portfolio
@@ -428,7 +430,10 @@ async def coming_soon_callback(callback: CallbackQuery, session: AsyncSession) -
         await callback.answer()
         if callback.message:
             await callback.message.answer(
-                "Portfolio dizaynini tanlang:",
+                text("portfolio_example", user.language_code),
+            )
+            await callback.message.answer(
+                text("portfolio_choose_template", user.language_code),
                 reply_markup=portfolio_template_keyboard(user.language_code),
             )
         return
@@ -827,18 +832,30 @@ async def collect_text(
         return
     step = STEP_BY_KEY.get(draft.current_step) if draft is not None else None
     current_question = step_prompt(step.key, user.language_code) if step else None
-    try:
-        decision = await ai_provider.understand_message(
-            raw_answer,
-            language=user.language_code,
-            current_question=current_question,
-            current_step=step.key if step else None,
-        )
-    except AIProviderUnavailableError:
+    # Do not spend a Gemini request (or wait for its timeout) for ordinary
+    # answers inside an active form.  The current step already defines what
+    # this message means; Gemini is reserved for commands and free-form chat.
+    decision = local_message_decision(raw_answer)
+    active_form = draft is not None and draft.status in {
+        "collecting", "confirming_list", "confirming_edit_list", "editing", "editing_list",
+    } and step is not None
+    if decision is None and active_form:
+        decision = AssistantDecision(intent="form_answer", answer_value=raw_answer)
+    elif decision is None and draft is not None and draft.status == "awaiting_photo":
         decision = None
-    except Exception:
-        logger.exception("Could not understand user message with Gemini")
-        decision = None
+    elif decision is None:
+        try:
+            decision = await ai_provider.understand_message(
+                raw_answer,
+                language=user.language_code,
+                current_question=current_question,
+                current_step=step.key if step else None,
+            )
+        except AIProviderUnavailableError:
+            decision = None
+        except Exception:
+            logger.exception("Could not understand user message with Gemini")
+            decision = None
 
     if decision is not None:
         logger.info(

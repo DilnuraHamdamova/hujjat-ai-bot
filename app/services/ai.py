@@ -64,6 +64,44 @@ class AIResponseError(RuntimeError):
     """Raised when Gemini returns no usable response."""
 
 
+def local_message_decision(message: str) -> AssistantDecision | None:
+    """Handle common bot commands without a network round-trip.
+
+    Form answers are intentionally not sent here: the active form already
+    tells us that an ordinary message is an answer to its current question.
+    """
+    normalized = " ".join(message.casefold().replace("’", "'").split())
+    if normalized in {
+        "salom", "assalomu alaykum", "assalom alaykum", "hello", "hi", "hey",
+        "rahmat", "katta rahmat", "thanks", "спасибо",
+    }:
+        return AssistantDecision(intent="chat", reply="Salom! Sizga qanday yordam beray?")
+    patterns: tuple[tuple[AssistantIntent, tuple[str, ...]], ...] = (
+        ("show_last_document", ("oxirgi cv", "cv'imni chiqar", "cvimni chiqar", "oxirgi hujjat")),
+        (
+            "start_new",
+            (
+                "yangi cv", "yangi hujjat", "cv yarat", "cv tayyorlamoqchiman", "cv kerak",
+                "rezyume kerak",
+            ),
+        ),
+        ("stop", ("to'xtat", "bekor qil", "stop", "cancel")),
+        ("help", ("yordam", "nima qila olasan", "help")),
+        ("go_back", ("orqaga", "oldingi savol", "go back")),
+        (
+            "skip",
+            (
+                "keyingi savol", "keyingisiga o't", "keyingisiga ot", "buni tashlab o't",
+                "buni tashlab ot", "o'tkazib yubor", "otkazib yubor",
+            ),
+        ),
+    )
+    for intent, values in patterns:
+        if any(value in normalized for value in values):
+            return AssistantDecision(intent=intent)
+    return None
+
+
 class GeminiProvider:
     def __init__(
         self,
@@ -163,19 +201,9 @@ class GeminiProvider:
         current_step: str | None,
     ) -> AssistantDecision:
         normalized = " ".join(message.casefold().replace("’", "'").split())
-        if normalized in {
-            "salom",
-            "assalomu alaykum",
-            "assalom alaykum",
-            "hello",
-            "hi",
-            "hey",
-            "rahmat",
-            "katta rahmat",
-            "thanks",
-            "спасибо",
-        }:
-            return AssistantDecision(intent="chat", reply="Salom! Sizga qanday yordam beray?")
+        local_decision = local_message_decision(message)
+        if local_decision is not None:
+            return local_decision
         local_patterns: tuple[tuple[AssistantIntent, tuple[str, ...]], ...] = (
             (
                 "show_last_document",

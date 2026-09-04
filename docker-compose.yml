@@ -2,7 +2,7 @@ services:
   app:
     build: .
     restart: unless-stopped
-    env_file: .env
+    env_file: ${ENV_FILE:-.env}
     ports:
       - "8000:8000"
     volumes:
@@ -21,7 +21,7 @@ services:
   worker:
     build: .
     restart: unless-stopped
-    env_file: .env
+    env_file: ${ENV_FILE:-.env}
     command: celery -A app.tasks.celery_app:celery_app worker --loglevel=INFO
     volumes:
       - documents:/app/storage

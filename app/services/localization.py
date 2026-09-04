@@ -37,6 +37,42 @@ TEXTS: dict[str, dict[Language, str]] = {
         "en": "What would you like to create?",
         "ru": "Что вы хотите создать?",
     },
+    "portfolio_example": {
+        "uz": (
+            "✨ <b>Professional portfolio namunasi</b>\n\n"
+            "<b>PROFILE</b>\nAli Valiyev — Product Designer\nToshkent, O‘zbekiston\n\n"
+            "<b>ABOUT</b>\nMen foydalanuvchi muammolarini sodda va chiroyli raqamli "
+            "mahsulotlarga aylantiruvchi dizaynerman.\n\n"
+            "<b>SKILLS</b>\nUX Research · Figma · Prototyping · Design Systems\n\n"
+            "<b>EXPERIENCE</b>\nProduct Designer — Tech Company (2022–hozirgacha)\n\n"
+            "<b>CONTACT</b>\nali@example.com\n\n"
+            "Shu namuna kabi aniq, qisqa va professional ma’lumot kiriting."
+        ),
+        "en": (
+            "✨ <b>Professional portfolio example</b>\n\n"
+            "<b>PROFILE</b>\nAli Valiyev — Product Designer\nTashkent, Uzbekistan\n\n"
+            "<b>ABOUT</b>\nI turn user problems into simple, beautiful digital products.\n\n"
+            "<b>SKILLS</b>\nUX Research · Figma · Prototyping · Design Systems\n\n"
+            "<b>EXPERIENCE</b>\nProduct Designer — Tech Company (2022–present)\n\n"
+            "<b>CONTACT</b>\nali@example.com\n\n"
+            "Use this example as a guide: keep your information clear, concise, and professional."
+        ),
+        "ru": (
+            "✨ <b>Пример профессионального портфолио</b>\n\n"
+            "<b>PROFILE</b>\nАли Валиёв — Product Designer\nТашкент, Узбекистан\n\n"
+            "<b>ABOUT</b>\nПревращаю задачи пользователей в простые и красивые цифровые "
+            "продукты.\n\n"
+            "<b>SKILLS</b>\nUX Research · Figma · Prototyping · Design Systems\n\n"
+            "<b>EXPERIENCE</b>\nProduct Designer — Tech Company (2022–сейчас)\n\n"
+            "<b>CONTACT</b>\nali@example.com\n\n"
+            "Ориентируйтесь на этот пример: пишите ясно, кратко и профессионально."
+        ),
+    },
+    "portfolio_choose_template": {
+        "uz": "Endi portfolio dizaynini tanlang:",
+        "en": "Now choose a portfolio design:",
+        "ru": "Теперь выберите дизайн портфолио:",
+    },
     "choose_template": {
         "uz": "CV uchun shablonni tanlang:",
         "en": "Choose a resume template:",
