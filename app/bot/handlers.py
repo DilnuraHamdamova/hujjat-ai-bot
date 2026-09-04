@@ -9,7 +9,13 @@ from pathlib import Path
 from aiogram import Bot, F, Router
 from aiogram.enums import ChatAction
 from aiogram.filters import Command, CommandStart
-from aiogram.types import CallbackQuery, FSInputFile, Message, ReplyKeyboardRemove
+from aiogram.types import (
+    CallbackQuery,
+    FSInputFile,
+    InputMediaPhoto,
+    Message,
+    ReplyKeyboardRemove,
+)
 from aiogram.types import User as TelegramUser
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,6 +32,7 @@ from app.bot.keyboards import (
     objective_education_level_keyboard,
     output_format_keyboard,
     photo_navigation_keyboard,
+    portfolio_template_keyboard,
     question_navigation_keyboard,
     relative_label,
     relative_more_keyboard,
@@ -186,6 +193,25 @@ async def _advance_relative(
 
 
 async def _show_template_gallery(message: Message, language: str) -> None:
+    # Show real previews in Telegram so the user can see the design before
+    # selecting it.  The WebApp is optional; inline Telegram flows must work
+    # on phones where opening a WebApp/domain is unavailable.
+    preview_dir = Path(__file__).resolve().parents[1] / "assets" / "template_previews"  # noqa: ASYNC240
+    representative_codes = ("classic_1", "modern_1", "europass_1")
+    media = [
+        InputMediaPhoto(
+            media=FSInputFile(preview_dir / f"{code}.png"),
+            caption={
+                "classic_1": text("template_classic_caption", language),
+                "modern_1": text("template_modern_caption", language),
+                "europass_1": text("template_europass_caption", language),
+            }[code],
+        )
+        for code in representative_codes
+        if (preview_dir / f"{code}.png").exists()
+    ]
+    if media:
+        await message.answer_media_group(media)
     await message.answer(
         text("template_gallery_intro", language),
         reply_markup=cv_template_keyboard(language),
@@ -315,7 +341,18 @@ async def template_family_callback(callback: CallbackQuery, session: AsyncSessio
     user = await _user(session, callback.from_user)
     await callback.answer()
     if isinstance(callback.message, Message):
-        await callback.message.edit_text(
+        preview_dir = Path(__file__).resolve().parents[1] / "assets" / "template_previews"  # noqa: ASYNC240
+        media = [
+            InputMediaPhoto(
+                media=FSInputFile(preview_dir / f"{family}_{number}.png"),
+                caption=f"{family.title()} {number}",
+            )
+            for number in range(1, 4)
+            if (preview_dir / f"{family}_{number}.png").exists()
+        ]
+        if media:
+            await callback.message.answer_media_group(media)
+        await callback.message.answer(
             text("choose_template_variant", user.language_code),
             reply_markup=template_variant_keyboard(family, user.language_code),
         )
@@ -391,10 +428,28 @@ async def coming_soon_callback(callback: CallbackQuery, session: AsyncSession) -
         await callback.answer()
         if callback.message:
             await callback.message.answer(
-                "Portfolio uchun ma’lumotlarni kiriting. Avval ism va familiyangizni yozing:"
+                "Portfolio dizaynini tanlang:",
+                reply_markup=portfolio_template_keyboard(user.language_code),
             )
         return
     await callback.answer(text("coming_soon", user.language_code), show_alert=True)
+
+
+@router.callback_query(F.data.startswith("portfolio-template:"))
+async def portfolio_template_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    if callback.data is None:
+        return
+    template_code = callback.data.rsplit(":", 1)[-1]
+    if template_code not in {"minimal", "modern", "creative", "developer"}:
+        return
+    user = await _user(session, callback.from_user)
+    draft = await create_resume(session, user.id, document_type="portfolio")
+    await update_draft_flow(session, draft, data_updates={"portfolio_template": template_code})
+    await callback.answer()
+    if callback.message:
+        await callback.message.answer(
+            "Portfolio uchun ma’lumotlarni kiriting. Avval ism va familiyangizni yozing:"
+        )
 
 
 async def _show_last(message: Message, session: AsyncSession, telegram_user: TelegramUser) -> None:

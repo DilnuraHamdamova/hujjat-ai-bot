@@ -41,6 +41,17 @@ def document_type_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
     )
 
 
+def portfolio_template_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    labels = ("◻️ Minimal", "✨ Modern", "🎨 Creative", "💻 Developer")
+    codes = ("minimal", "modern", "creative", "developer")
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=label, callback_data=f"portfolio-template:{code}")]
+            for code, label in zip(codes, labels, strict=True)
+        ]
+    )
+
+
 def cv_template_keyboard(
     language: str = "uz",
 ) -> InlineKeyboardMarkup | ReplyKeyboardMarkup:

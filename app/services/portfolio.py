@@ -22,10 +22,17 @@ def render_portfolio(data: dict[str, object]) -> str:
     skills = data.get("skills", [])
     skills_html = "".join(f"<li>{escape(str(item))}</li>" for item in skills if str(item).strip()) if isinstance(skills, list) else ""
     projects = data.get("experience", [])
+    themes = {
+        "minimal": ("#111827", "#374151", "#ffffff"),
+        "modern": ("#6d5dfc", "#18202a", "#f7f8fc"),
+        "creative": ("#ec4899", "#312e81", "#fff7ed"),
+        "developer": ("#22c55e", "#d1fae5", "#07130b"),
+    }
+    accent, ink, background = themes.get(str(data.get("portfolio_template")), themes["modern"])
     cards = "".join(f"<article><h3>{escape(str(item))}</h3></article>" for item in projects if str(item).strip()) if isinstance(projects, list) else ""
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc("full_name")} — Portfolio</title>
-<style>body{{font-family:system-ui,sans-serif;max-width:900px;margin:auto;padding:8vw 6vw;color:#18202a;background:#f7f8fc}}h1{{font-size:clamp(3rem,10vw,6rem);line-height:1;margin:.2em 0}}h2{{margin-top:3rem;color:#6d5dfc}}.lead{{font-size:1.5rem;color:#667085}}ul{{display:flex;flex-wrap:wrap;gap:10px;padding:0;list-style:none}}li,article{{background:white;border-radius:14px;padding:14px 18px;box-shadow:0 8px 24px #18202a12}}a{{color:#6d5dfc;font-weight:700}}</style></head>
+<style>body{{font-family:system-ui,sans-serif;max-width:900px;margin:auto;padding:8vw 6vw;color:{ink};background:{background}}}h1{{font-size:clamp(3rem,10vw,6rem);line-height:1;margin:.2em 0}}h2{{margin-top:3rem;color:{accent}}}.lead{{font-size:1.5rem;color:#667085}}ul{{display:flex;flex-wrap:wrap;gap:10px;padding:0;list-style:none}}li,article{{background:white;border-radius:14px;padding:14px 18px;box-shadow:0 8px 24px #18202a12}}a{{color:{accent};font-weight:700}}</style></head>
 <body><p>{esc("location", "Portfolio")}</p><h1>{esc("full_name")}</h1><p class="lead">{esc("job_title")}</p>
 <section><h2>About me</h2><p>{esc("summary")}</p></section>
 {f'<section><h2>Skills</h2><ul>{skills_html}</ul></section>' if skills_html else ''}
