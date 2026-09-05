@@ -55,12 +55,12 @@ def portfolio_template_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
 def portfolio_sections_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
     labels = {
         "uz": (
-            ("profile", "👤 Profile"), ("about", "📝 About"), ("skills", "🛠 Skills"),
-            ("experience", "💼 Experience"), ("education", "🎓 Education"),
-            ("contact", "📬 Contact"), ("projects", "🚀 Projects"),
-            ("certificates", "🏅 Certificates"), ("publications", "📚 Publications"),
-            ("languages", "🌐 Languages"), ("links", "🔗 Links & Profiles"),
-            ("achievements", "🏆 Achievements / Vlog"),
+            ("profile", "👤 Profil"), ("about", "📝 Men haqimda"), ("skills", "🛠 Ko‘nikmalar"),
+            ("experience", "💼 Ish tajribasi"), ("education", "🎓 Ta’lim"),
+            ("contact", "📬 Kontakt"), ("projects", "🚀 Loyihalar"),
+            ("certificates", "🏅 Sertifikatlar"), ("publications", "📚 Nashrlar"),
+            ("languages", "🌐 Tillar"), ("links", "🔗 Havolalar va profillar"),
+            ("achievements", "🏆 Yutuqlar / Vlog"),
         ),
         "en": (
             ("profile", "👤 Profile"), ("about", "📝 About"), ("skills", "🛠 Skills"),
@@ -83,7 +83,8 @@ def portfolio_sections_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=label, callback_data=f"portfolio-section:{code}")]
         for code, label in labels
     ]
-    rows.append([InlineKeyboardButton(text="✅ Tayyor / Finish", callback_data="portfolio:finish")])
+    finish = {"uz": "✅ Tayyor", "en": "✅ Finish", "ru": "✅ Готово"}[normalize_language(language)]
+    rows.append([InlineKeyboardButton(text=finish, callback_data="portfolio:finish")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 

@@ -12,7 +12,8 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import (
     CallbackQuery,
     FSInputFile,
-    InputMediaPhoto,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
     Message,
     ReplyKeyboardRemove,
 )
@@ -44,7 +45,6 @@ from app.bot.keyboards import (
     section_cancel_keyboard,
     start_keyboard,
     suggested_skill_codes,
-    template_variant_keyboard,
 )
 from app.core.config import get_settings
 from app.db.models import ResumeDraft, User
@@ -197,25 +197,11 @@ async def _advance_relative(
 
 
 async def _show_template_gallery(message: Message, language: str) -> None:
-    # Show real previews in Telegram so the user can see the design before
-    # selecting it.  The WebApp is optional; inline Telegram flows must work
-    # on phones where opening a WebApp/domain is unavailable.
-    preview_dir = Path(__file__).resolve().parents[1] / "assets" / "template_previews"  # noqa: ASYNC240
-    representative_codes = ("classic_1", "modern_1", "europass_1")
-    media = [
-        InputMediaPhoto(
-            media=FSInputFile(preview_dir / f"{code}.png"),
-            caption={
-                "classic_1": text("template_classic_caption", language),
-                "modern_1": text("template_modern_caption", language),
-                "europass_1": text("template_europass_caption", language),
-            }[code],
-        )
-        for code in representative_codes
-        if (preview_dir / f"{code}.png").exists()
-    ]
-    if media:
-        await message.answer_media_group(media)
+    # Remove a previously installed WebApp reply keyboard.  Older chats may
+    # still have that persistent button even though the inline gallery is now
+    # used by default.
+    if not get_settings().template_webapp_url.strip():
+        await message.answer("✅", reply_markup=ReplyKeyboardRemove())
     await message.answer(
         text("template_gallery_intro", language),
         reply_markup=cv_template_keyboard(language),
@@ -227,6 +213,10 @@ async def start(message: Message, session: AsyncSession) -> None:
     if message.from_user is None:
         return
     await _user(session, message.from_user)
+    # Telegram keeps reply keyboards in old chats. Remove the legacy WebApp
+    # keyboard before showing the language selector, including for users who
+    # never open the CV gallery again.
+    await message.answer("✅", reply_markup=ReplyKeyboardRemove())
     await message.answer(
         "<b>Assalomu alaykum! Hujjat tayyorlab beruvchi botga xush kelibsiz!</b>\n\n"
         + text("choose_language", "uz"),
@@ -346,20 +336,29 @@ async def template_family_callback(callback: CallbackQuery, session: AsyncSessio
     await callback.answer()
     if isinstance(callback.message, Message):
         preview_dir = Path(__file__).resolve().parents[1] / "assets" / "template_previews"  # noqa: ASYNC240
-        media = [
-            InputMediaPhoto(
-                media=FSInputFile(preview_dir / f"{family}_{number}.png"),
+        await callback.message.answer(text("choose_template_variant", user.language_code))
+        # Albums cannot have a separate inline keyboard for every image, so
+        # send each preview as its own message with its own select button.
+        for number in range(1, 4):
+            preview_path = preview_dir / f"{family}_{number}.png"
+            if not preview_path.exists():
+                continue
+            await callback.message.answer_photo(
+                photo=FSInputFile(preview_path),
                 caption=f"{family.title()} {number}",
+                reply_markup=InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text={"uz": "✅ Tanlash", "en": "✅ Select", "ru": "✅ Выбрать"}[
+                                    normalize_language(user.language_code)
+                                ],
+                                callback_data=f"template:{family}_{number}",
+                            )
+                        ]
+                    ]
+                ),
             )
-            for number in range(1, 4)
-            if (preview_dir / f"{family}_{number}.png").exists()
-        ]
-        if media:
-            await callback.message.answer_media_group(media)
-        await callback.message.answer(
-            text("choose_template_variant", user.language_code),
-            reply_markup=template_variant_keyboard(family, user.language_code),
-        )
 
 
 @router.message(F.web_app_data)
@@ -479,7 +478,12 @@ async def portfolio_template_callback(callback: CallbackQuery, session: AsyncSes
     await callback.answer()
     if callback.message:
         await callback.message.answer(
-            "Endi bo‘limlarni birma-bir to‘ldiring. Avval Profile bo‘limidan boshlang:",
+            {
+                "uz": "Kerakli bo‘limlarni tanlang. Tanlaganingizdan boshlab "
+                "navbatma-navbat to‘ldirasiz:",
+                "en": "Choose the sections you need. You will fill them one by one:",
+                "ru": "Выберите нужные разделы. Затем заполните их по очереди:",
+            }[normalize_language(user.language_code)],
             reply_markup=portfolio_sections_keyboard(user.language_code),
         )
 
@@ -499,6 +503,38 @@ _PORTFOLIO_SECTION_PROMPTS = {
     "yozing.",
     "achievements": "Achievements / Vlog: yutuq yoki vlog nomi, tavsifi va rasm/video "
     "linkini yozing.",
+}
+
+_PORTFOLIO_PROMPTS = {
+    "uz": {
+        "profile": "Profil: ism-familiya, kasbiy lavozim va qisqa tagline yozing.",
+        "about": "Men haqimda: tajriba, yo‘nalish va maqsad haqida 2–4 jumla yozing.",
+        "skills": "Ko‘nikmalar: asosiy ko‘nikmalarni vergul bilan ajrating.",
+        "experience": "Ish tajribasi: ish joyi, lavozim va natijalarni yozing.",
+        "education": "Ta’lim: muassasa, yo‘nalish va yillarni yozing.",
+        "contact": "Kontakt: email, telefon va joylashuvni yozing.",
+        "projects": "Loyihalar: nomi, tavsifi, GitHub/live demo linkini yozing.",
+        "certificates": "Sertifikatlar: nomi, tashkilot va linkini yozing.",
+        "publications": "Nashrlar: maqola nomi va linkini yozing.",
+        "languages": "Tillar: til va darajani yozing.",
+        "links": "Havolalar: GitHub, LinkedIn va boshqa profillar linkini yozing.",
+        "achievements": "Yutuqlar/Vlog: nomi, tavsifi va rasm/video linkini yozing.",
+    },
+    "en": _PORTFOLIO_SECTION_PROMPTS,
+    "ru": {
+        "profile": "Профиль: напишите имя, профессию и короткий слоган.",
+        "about": "Обо мне: напишите о своём опыте, направлении и целях в 2–4 предложениях.",
+        "skills": "Навыки: перечислите основные навыки через запятую.",
+        "experience": "Опыт: укажите компанию, должность и результаты.",
+        "education": "Образование: укажите учебное заведение, направление и годы.",
+        "contact": "Контакты: укажите email, телефон и город.",
+        "projects": "Проекты: название, описание и ссылку GitHub/live demo.",
+        "certificates": "Сертификаты: название, организацию и ссылку.",
+        "publications": "Публикации: название статьи и ссылку.",
+        "languages": "Языки: укажите язык и уровень.",
+        "links": "Ссылки: добавьте GitHub, LinkedIn и другие профили.",
+        "achievements": "Достижения/Влог: название, описание и ссылку на фото/видео.",
+    },
 }
 
 
@@ -523,7 +559,9 @@ async def portfolio_section_callback(callback: CallbackQuery, session: AsyncSess
     )
     await callback.answer()
     if callback.message:
-        await callback.message.answer(_PORTFOLIO_SECTION_PROMPTS[section])
+        await callback.message.answer(
+            _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][section]
+        )
 
 
 @router.callback_query(F.data == "portfolio:finish")
