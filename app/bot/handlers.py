@@ -484,7 +484,7 @@ async def portfolio_template_callback(callback: CallbackQuery, session: AsyncSes
                 "en": "Choose the sections you need. You will fill them one by one:",
                 "ru": "Выберите нужные разделы. Затем заполните их по очереди:",
             }[normalize_language(user.language_code)],
-            reply_markup=portfolio_sections_keyboard(user.language_code),
+            reply_markup=portfolio_sections_keyboard(user.language_code, []),
         )
 
 
@@ -550,33 +550,43 @@ async def portfolio_section_callback(callback: CallbackQuery, session: AsyncSess
     if draft is None or draft.data.get("document_type") != "portfolio":
         await callback.answer(text("start_first", user.language_code), show_alert=True)
         return
-    await update_draft_flow(
-        session,
-        draft,
-        status="collecting",
-        current_step="portfolio_section",
-        data_updates={"portfolio_active_section": section},
+    selected = [str(item) for item in draft.data.get("portfolio_selected_sections", [])]
+    if section in selected:
+        selected.remove(section)
+    else:
+        selected.append(section)
+    draft = await update_draft_flow(
+        session, draft, status="portfolio_sections", current_step="portfolio_sections",
+        data_updates={"portfolio_selected_sections": selected},
     )
     await callback.answer()
     if callback.message:
-        await callback.message.answer(
-            _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][section]
+        await callback.message.edit_reply_markup(
+            reply_markup=portfolio_sections_keyboard(user.language_code, selected)
         )
 
 
-@router.callback_query(F.data == "portfolio:finish")
+@router.callback_query(F.data == "portfolio:start")
 async def portfolio_finish_callback(callback: CallbackQuery, session: AsyncSession) -> None:
     user = await _user(session, callback.from_user)
     draft = await get_current_resume(session, user.id)
     if draft is None or draft.data.get("document_type") != "portfolio":
         await callback.answer(text("start_first", user.language_code), show_alert=True)
         return
+    selected = [str(item) for item in draft.data.get("portfolio_selected_sections", [])]
+    if not selected:
+        await callback.answer("Avval kamida bitta bo‘limni tanlang.", show_alert=True)
+        return
+    section = selected[0]
     draft = await update_draft_flow(
-        session, draft, status="review", current_step="portfolio_sections"
+        session, draft, status="collecting", current_step="portfolio_section",
+        data_updates={"portfolio_active_section": section, "portfolio_section_index": 0},
     )
     await callback.answer()
     if callback.message:
-        await _send_preview(callback.message, draft.data, user.language_code)
+        await callback.message.answer(
+            _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][section]
+        )
 
 
 async def _show_last(message: Message, session: AsyncSession, telegram_user: TelegramUser) -> None:
@@ -984,18 +994,26 @@ async def collect_text(
             custom = list(draft.data.get("portfolio_sections", []))
             custom.append({"title": section.title(), "content": raw_answer.strip()})
             updates = {"portfolio_sections": custom}
-        draft = await update_draft_flow(
-            session,
-            draft,
-            data_updates=updates,
-            remove_keys=("portfolio_active_section",),
-            status="portfolio_sections",
-            current_step="portfolio_sections",
-        )
-        await message.answer(
-            "Bo‘lim saqlandi. Keyingi bo‘limni tanlang yoki Tayyor tugmasini bosing.",
-            reply_markup=portfolio_sections_keyboard(user.language_code),
-        )
+        selected = [str(item) for item in draft.data.get("portfolio_selected_sections", [])]
+        index = int(draft.data.get("portfolio_section_index", 0)) + 1
+        if index < len(selected):
+            next_section = selected[index]
+            draft = await update_draft_flow(
+                session, draft, data_updates={**updates, "portfolio_active_section": next_section,
+                                              "portfolio_section_index": index},
+                status="collecting", current_step="portfolio_section",
+            )
+            await message.answer(
+                "Bo‘lim saqlandi. Keyingi bo‘lim:\n\n"
+                + _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][next_section]
+            )
+        else:
+            draft = await update_draft_flow(
+                session, draft, data_updates=updates,
+                remove_keys=("portfolio_active_section",), status="review",
+                current_step="portfolio_sections",
+            )
+            await _send_preview(message, draft.data, user.language_code)
         return
     step = STEP_BY_KEY.get(draft.current_step) if draft is not None else None
     current_question = step_prompt(step.key, user.language_code) if step else None
