@@ -13,9 +13,12 @@ const observer = new IntersectionObserver(
 document.querySelectorAll(".reveal").forEach((element) => observer.observe(element));
 document.querySelector("#year").textContent = new Date().getFullYear();
 
-const orb = document.querySelector(".orb");
-window.addEventListener("pointermove", (event) => {
-  const x = (event.clientX / window.innerWidth - 0.5) * 14;
-  const y = (event.clientY / window.innerHeight - 0.5) * 14;
-  orb.style.transform = `translate(${x}px, ${y}px)`;
-});
+const showcase = document.querySelector(".hero-showcase");
+if (showcase && window.matchMedia("(pointer: fine)").matches) {
+  window.addEventListener("pointermove", (event) => {
+    const x = (event.clientX / window.innerWidth - 0.5) * 5;
+    const y = (event.clientY / window.innerHeight - 0.5) * 5;
+    showcase.style.setProperty("--shift-x", `${x}px`);
+    showcase.style.setProperty("--shift-y", `${y}px`);
+  });
+}
