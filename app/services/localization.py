@@ -160,24 +160,24 @@ TEXTS: dict[str, dict[Language, str]] = {
     },
     "portfolio_example": {
         "uz": (
-            "✨ <b>Professional dasturchi portfolio namunasi</b>\n\n"
-            "<b>Alex Morgan</b> — mahsulotga yo‘naltirilgan Software Engineer.\n\n"
+            "✨ <b>Professional loyiha menejeri portfolio namunasi</b>\n\n"
+            "<b>Madina Karimova</b> — strategik loyiha menejeri.\n\n"
             "Profil · Men haqimda · Ko‘nikmalar · Ish tajribasi · Ta’lim\n"
             "Loyihalar · Sertifikatlar · Nashrlar · Tillar · Yutuqlar / Vlog\n"
             "Havolalar va profillar · Bog‘lanish\n\n"
             "Quyidagi tugma orqali to‘liq professional saytni ko‘ring."
         ),
         "en": (
-            "✨ <b>Professional developer portfolio example</b>\n\n"
-            "<b>Alex Morgan</b> — a product-minded Software Engineer.\n\n"
+            "✨ <b>Professional project manager portfolio example</b>\n\n"
+            "<b>Madina Karimova</b> — a strategic project manager.\n\n"
             "Profile · About · Skills · Experience · Education · Projects\n"
             "Certificates · Publications · Languages · Achievements / Vlog\n"
             "Links &amp; Profiles · Contact\n\n"
             "Open the complete professional website with the button below."
         ),
         "ru": (
-            "✨ <b>Пример профессионального портфолио разработчика</b>\n\n"
-            "<b>Alex Morgan</b> — Software Engineer с продуктовым мышлением.\n\n"
+            "✨ <b>Пример профессионального портфолио менеджера проектов</b>\n\n"
+            "<b>Madina Karimova</b> — менеджер проектов со стратегическим мышлением.\n\n"
             "Профиль · Обо мне · Навыки · Опыт работы · Образование · Проекты\n"
             "Сертификаты · Публикации · Языки · Достижения / Влог\n"
             "Ссылки и профили · Контакты\n\n"
