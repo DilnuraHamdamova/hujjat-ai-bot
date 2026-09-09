@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     webhook_secret: SecretStr = Field(default=SecretStr("change-this-secret"))
     template_webapp_url: str = ""
     portfolio_example_url: str = "https://hujjat-ai-developer-portfolio.netlify.app"
+    # Optional server-owned token. Users never need a Netlify account.
+    netlify_token: SecretStr = Field(default=SecretStr(""))
 
     database_url: str = "postgresql+asyncpg://cvbot:cvbot@localhost:5432/cvbot"
     redis_url: str = "redis://localhost:6379/0"

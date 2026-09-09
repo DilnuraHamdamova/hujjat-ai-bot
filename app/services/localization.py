@@ -250,6 +250,11 @@ TEXTS: dict[str, dict[Language, str]] = {
         "en": "❌ The portfolio could not be published. Check the token and send it again.",
         "ru": "❌ Не удалось опубликовать портфолио. Проверьте токен и отправьте его снова.",
     },
+    "portfolio_download_ready": {
+        "uz": "✅ Portfolio tayyor. ZIP faylni ochib, index.html faylini hostingga joylang.",
+        "en": "✅ Your portfolio is ready. Unzip the file and upload index.html to any hosting.",
+        "ru": "✅ Портфолио готово. Распакуйте ZIP и загрузите index.html на любой хостинг.",
+    },
     "choose_template": {
         "uz": "CV uchun shablonni tanlang:",
         "en": "Choose a resume template:",

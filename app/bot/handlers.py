@@ -11,6 +11,7 @@ from aiogram.enums import ChatAction
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command, CommandStart
 from aiogram.types import (
+    BufferedInputFile,
     CallbackQuery,
     FSInputFile,
     InlineKeyboardButton,
@@ -39,7 +40,6 @@ from app.bot.keyboards import (
     portfolio_sections_keyboard,
     portfolio_step_keyboard,
     portfolio_template_keyboard,
-    portfolio_token_keyboard,
     question_navigation_keyboard,
     relative_label,
     relative_more_keyboard,
@@ -91,7 +91,12 @@ from app.services.localization import (
     step_prompt,
     text,
 )
-from app.services.portfolio import PortfolioDeploymentError, deploy_to_netlify, render_portfolio
+from app.services.portfolio import (
+    PortfolioDeploymentError,
+    deploy_to_netlify,
+    portfolio_zip,
+    render_portfolio,
+)
 from app.services.resume_flow import (
     STEP_BY_KEY,
     EmploymentEntry,
@@ -461,7 +466,7 @@ async def coming_soon_callback(callback: CallbackQuery, session: AsyncSession) -
 async def portfolio_ready_callback(callback: CallbackQuery, session: AsyncSession) -> None:
     user = await _user(session, callback.from_user)
     await callback.answer()
-    if callback.message is None:
+    if not isinstance(callback.message, Message):
         return
     if callback.data == "portfolio-ready:again":
         await callback.message.answer(
@@ -703,6 +708,38 @@ async def _send_preview(message: Message, data: dict[str, object], language: str
             else review_keyboard(language)
         ),
     )
+
+
+async def _publish_portfolio(
+    message: Message,
+    session: AsyncSession,
+    draft: ResumeDraft,
+    language: str,
+    site_suffix: str,
+) -> None:
+    """Publish with the bot's server token, or give the user a ready ZIP.
+
+    A Netlify account is an optional owner-side integration, never a user
+    requirement. This keeps the portfolio flow usable for every Telegram user.
+    """
+    document = render_portfolio(draft.data, language)
+    server_token = get_settings().netlify_token.get_secret_value().strip()
+    status_message = await message.answer(text("portfolio_deploying", language))
+    try:
+        if server_token:
+            url = await deploy_to_netlify(document, server_token, f"hujjat-portfolio-{site_suffix}")
+            await mark_completed(session, draft)
+            await status_message.edit_text(text("portfolio_deployed", language, url=url))
+            return
+        await message.answer_document(
+            BufferedInputFile(portfolio_zip(document), filename="portfolio.zip"),
+            caption=text("portfolio_download_ready", language),
+        )
+        await mark_completed(session, draft)
+        await status_message.delete()
+    except PortfolioDeploymentError as error:
+        logger.warning("Portfolio deployment failed: %s", error)
+        await status_message.edit_text(text("portfolio_deploy_failed", language))
 
 
 @router.message(Command("my_cv"))
@@ -1962,15 +1999,17 @@ async def approve_callback(callback: CallbackQuery, session: AsyncSession) -> No
         return
 
     await callback.answer()
-    if callback.message is None:
+    if not isinstance(callback.message, Message):
         return
     if draft.data.get("document_type") == "portfolio":
-        await update_draft_flow(
-            session, draft, status="portfolio_token", current_step="portfolio_token"
-        )
-        await callback.message.answer(
-            text("portfolio_token_prompt", user.language_code),
-            reply_markup=portfolio_token_keyboard(user.language_code),
+        # Publishing uses the owner-configured server token. The end user
+        # should never be asked to register at Netlify or share credentials.
+        await _publish_portfolio(
+            callback.message,
+            session,
+            draft,
+            user.language_code,
+            str(callback.from_user.id),
         )
         return
     await callback.message.answer(
