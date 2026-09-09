@@ -93,6 +93,29 @@ def render_portfolio(data: dict[str, object], language: str = "uz") -> str:
             if str(item).strip()
         )
 
+    def project_cards() -> str:
+        values = data.get("projects", [])
+        if not isinstance(values, list):
+            return ""
+        cards: list[str] = []
+        for item in values:
+            lines = [line.strip(" •-\t") for line in str(item).splitlines() if line.strip()]
+            if not lines:
+                continue
+            title, *details = lines
+            detail_html = "".join(f"<li>{rich(line)}</li>" for line in details)
+            if not detail_html:
+                detail_html = f"<li>{rich(title)}</li>"
+                title = "Loyiha"
+            cards.append(
+                '<article class="card project-card"><h3>'
+                + rich(title)
+                + '</h3><ul class="project-points">'
+                + detail_html
+                + "</ul></article>"
+            )
+        return "".join(cards)
+
     def section(title: str, body: str, section_id: str = "") -> str:
         if not body:
             return ""
@@ -117,6 +140,7 @@ def render_portfolio(data: dict[str, object], language: str = "uz") -> str:
     experience_html = cards_for("experience")
     education_html = cards_for("education")
     languages_html = cards_for("languages")
+    projects_html = project_cards()
     sections = [
         section(labels["about"], '<p class="statement">' + summary_html + "</p>", "about")
         if summary_html
@@ -144,6 +168,9 @@ def render_portfolio(data: dict[str, object], language: str = "uz") -> str:
             "languages",
         )
         if languages_html
+        else "",
+        section(labels["projects"], '<div class="project-list">' + projects_html + "</div>", "projects")
+        if projects_html
         else "",
     ]
     custom_sections = data.get("portfolio_sections", [])
