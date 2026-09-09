@@ -81,7 +81,7 @@
 
   {% if relatives %}
   <section class="relatives-page">
-    <h3>{{ data.objective_full_name }}ning yaqin qarindoshlari to‘g‘risida<br>MA’LUMOT</h3>
+    <h3>{{ data.objective_full_name }} — {{ labels.relatives }}</h3>
     <table class="relatives">
       <thead><tr><th>{{ labels.relationship }}</th><th>{{ labels.relative_name }}</th><th>{{ labels.relative_birth }}</th><th>{{ labels.relative_work }}</th><th>{{ labels.relative_address }}</th></tr></thead>
       <tbody>{% for row in relatives %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody>

@@ -11,6 +11,9 @@ def test_template_webapp_contains_visible_choices() -> None:
     assert "Europass" in html
     assert "for (let number = 1; number <= 3" in html
     assert 'tg.sendData(JSON.stringify({action: "select_template"' in html
+    assert "100dvh" in html
+    assert "env(safe-area-inset-bottom)" in html
+    assert "height: clamp(300px, 62dvh, 560px)" in html
 
 
 def test_template_preview_only_serves_known_images() -> None:

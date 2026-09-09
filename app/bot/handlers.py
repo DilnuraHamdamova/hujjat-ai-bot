@@ -8,6 +8,7 @@ from pathlib import Path
 
 from aiogram import Bot, F, Router
 from aiogram.enums import ChatAction
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import Command, CommandStart
 from aiogram.types import (
     CallbackQuery,
@@ -34,8 +35,11 @@ from app.bot.keyboards import (
     output_format_keyboard,
     photo_navigation_keyboard,
     portfolio_ready_keyboard,
+    portfolio_review_keyboard,
     portfolio_sections_keyboard,
+    portfolio_step_keyboard,
     portfolio_template_keyboard,
+    portfolio_token_keyboard,
     question_navigation_keyboard,
     relative_label,
     relative_more_keyboard,
@@ -89,6 +93,7 @@ from app.services.resume_flow import (
     next_step,
     normalize_answer,
     normalize_employment_period,
+    normalize_employment_workplace,
     parse_answer,
     parse_employment_entries,
     previous_step,
@@ -198,10 +203,13 @@ async def _advance_relative(
 
 async def _show_template_gallery(message: Message, language: str) -> None:
     # Remove a previously installed WebApp reply keyboard.  Older chats may
-    # still have that persistent button even though the inline gallery is now
-    # used by default.
-    if not get_settings().template_webapp_url.strip():
-        await message.answer("✅", reply_markup=ReplyKeyboardRemove())
+    # still have that persistent button. The current gallery is always inline,
+    # so it must never resize Telegram's composer on Android/iOS/Desktop.
+    cleanup = await message.answer("⌨️", reply_markup=ReplyKeyboardRemove())
+    try:
+        await cleanup.delete()
+    except TelegramBadRequest:
+        logger.debug("Legacy reply-keyboard cleanup message could not be deleted")
     await message.answer(
         text("template_gallery_intro", language),
         reply_markup=cv_template_keyboard(language),
@@ -435,7 +443,9 @@ async def coming_soon_callback(callback: CallbackQuery, session: AsyncSession) -
             )
             await callback.message.answer(
                 "Namuna tushunarlimi, tayyormisiz?",
-                reply_markup=portfolio_ready_keyboard(user.language_code),
+                reply_markup=portfolio_ready_keyboard(
+                    user.language_code, get_settings().portfolio_example_url.strip()
+                ),
             )
         return
     await callback.answer(text("coming_soon", user.language_code), show_alert=True)
@@ -450,7 +460,9 @@ async def portfolio_ready_callback(callback: CallbackQuery, session: AsyncSessio
     if callback.data == "portfolio-ready:again":
         await callback.message.answer(
             text("portfolio_example", user.language_code),
-            reply_markup=portfolio_ready_keyboard(user.language_code),
+            reply_markup=portfolio_ready_keyboard(
+                user.language_code, get_settings().portfolio_example_url.strip()
+            ),
         )
         return
     await callback.message.answer(
@@ -479,13 +491,35 @@ async def portfolio_template_callback(callback: CallbackQuery, session: AsyncSes
     if callback.message:
         await callback.message.answer(
             {
-                "uz": "Kerakli bo‘limlarni tanlang. Tanlaganingizdan boshlab "
-                "navbatma-navbat to‘ldirasiz:",
-                "en": "Choose the sections you need. You will fill them one by one:",
-                "ru": "Выберите нужные разделы. Затем заполните их по очереди:",
+                "uz": "Portfolio’da qaysi kategoriyalarni qo‘shmoqchisiz? Tanlangan kategoriyalar "
+                "professional portfolio tartibida navbatma-navbat to‘ldiriladi:",
+                "en": (
+                    "Which categories would you like to add to your portfolio? Questions "
+                    "will follow a professional portfolio order:"
+                ),
+                "ru": (
+                    "Какие категории добавить в портфолио? Вопросы будут заданы "
+                    "в профессиональном порядке:"
+                ),
             }[normalize_language(user.language_code)],
             reply_markup=portfolio_sections_keyboard(user.language_code, []),
         )
+
+
+_PORTFOLIO_SECTION_ORDER = (
+    "profile",
+    "about",
+    "skills",
+    "experience",
+    "education",
+    "projects",
+    "certificates",
+    "publications",
+    "languages",
+    "achievements",
+    "links",
+    "contact",
+)
 
 
 _PORTFOLIO_SECTION_PROMPTS = {
@@ -551,12 +585,19 @@ async def portfolio_section_callback(callback: CallbackQuery, session: AsyncSess
         await callback.answer(text("start_first", user.language_code), show_alert=True)
         return
     selected = [str(item) for item in draft.data.get("portfolio_selected_sections", [])]
-    if section in selected:
-        selected.remove(section)
+    selected_set = set(selected)
+    selected = [code for code in _PORTFOLIO_SECTION_ORDER if code in selected_set]
+    selected_set = set(selected)
+    if section in selected_set:
+        selected_set.remove(section)
     else:
-        selected.append(section)
+        selected_set.add(section)
+    selected = [code for code in _PORTFOLIO_SECTION_ORDER if code in selected_set]
     draft = await update_draft_flow(
-        session, draft, status="portfolio_sections", current_step="portfolio_sections",
+        session,
+        draft,
+        status="portfolio_sections",
+        current_step="portfolio_sections",
         data_updates={"portfolio_selected_sections": selected},
     )
     await callback.answer()
@@ -574,19 +615,122 @@ async def portfolio_finish_callback(callback: CallbackQuery, session: AsyncSessi
         await callback.answer(text("start_first", user.language_code), show_alert=True)
         return
     selected = [str(item) for item in draft.data.get("portfolio_selected_sections", [])]
+    selected_set = set(selected)
+    selected = [code for code in _PORTFOLIO_SECTION_ORDER if code in selected_set]
     if not selected:
         await callback.answer("Avval kamida bitta bo‘limni tanlang.", show_alert=True)
         return
     section = selected[0]
     draft = await update_draft_flow(
-        session, draft, status="collecting", current_step="portfolio_section",
+        session,
+        draft,
+        status="collecting",
+        current_step="portfolio_section",
         data_updates={"portfolio_active_section": section, "portfolio_section_index": 0},
     )
     await callback.answer()
     if callback.message:
         await callback.message.answer(
-            _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][section]
+            _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][section],
+            reply_markup=portfolio_step_keyboard(user.language_code),
         )
+
+
+@router.callback_query(F.data.startswith("portfolio:back:"))
+async def portfolio_back_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    user = await _user(session, callback.from_user)
+    draft = await get_current_resume(session, user.id)
+    target = callback.data.rsplit(":", 1)[-1] if callback.data else ""
+    await callback.answer()
+    if callback.message is None:
+        return
+    if target == "documents":
+        await callback.message.answer(
+            text("choose_document", user.language_code),
+            reply_markup=document_type_keyboard(user.language_code),
+        )
+        return
+    if target == "example":
+        await callback.message.answer(text("portfolio_example", user.language_code))
+        await callback.message.answer(
+            "Namuna tushunarlimi, tayyormisiz?",
+            reply_markup=portfolio_ready_keyboard(
+                user.language_code, get_settings().portfolio_example_url.strip()
+            ),
+        )
+        return
+    if draft is None or draft.data.get("document_type") != "portfolio":
+        await callback.message.answer(text("start_first", user.language_code))
+        return
+    if target == "templates":
+        await update_draft_flow(
+            session, draft, status="portfolio_sections", current_step="portfolio_template"
+        )
+        await callback.message.answer(
+            text("portfolio_choose_template", user.language_code),
+            reply_markup=portfolio_template_keyboard(user.language_code),
+        )
+        return
+    if target == "review":
+        await update_draft_flow(session, draft, status="review", current_step="portfolio_sections")
+        await _send_preview(callback.message, draft.data, user.language_code)
+        return
+    if target == "last":
+        selected_set = {str(item) for item in draft.data.get("portfolio_selected_sections", [])}
+        selected = [code for code in _PORTFOLIO_SECTION_ORDER if code in selected_set]
+        if not selected:
+            return
+        last_index = len(selected) - 1
+        last_section = selected[last_index]
+        await update_draft_flow(
+            session,
+            draft,
+            status="collecting",
+            current_step="portfolio_section",
+            data_updates={
+                "portfolio_active_section": last_section,
+                "portfolio_section_index": last_index,
+            },
+        )
+        await callback.message.answer(
+            _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][last_section],
+            reply_markup=portfolio_step_keyboard(user.language_code),
+        )
+        return
+    if target != "section":
+        return
+    selected_set = {str(item) for item in draft.data.get("portfolio_selected_sections", [])}
+    selected = [code for code in _PORTFOLIO_SECTION_ORDER if code in selected_set]
+    index = int(draft.data.get("portfolio_section_index", 0))
+    if index <= 0:
+        await update_draft_flow(
+            session,
+            draft,
+            remove_keys=("portfolio_active_section",),
+            status="portfolio_sections",
+            current_step="portfolio_sections",
+        )
+        await callback.message.answer(
+            "Portfolio’da qaysi kategoriyalarni qo‘shmoqchisiz?",
+            reply_markup=portfolio_sections_keyboard(user.language_code, selected),
+        )
+        return
+    previous_index = index - 1
+    previous_section = selected[previous_index]
+    await update_draft_flow(
+        session,
+        draft,
+        status="collecting",
+        current_step="portfolio_section",
+        data_updates={
+            "portfolio_active_section": previous_section,
+            "portfolio_section_index": previous_index,
+        },
+    )
+    await callback.message.answer(
+        _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][previous_section],
+        reply_markup=portfolio_step_keyboard(user.language_code),
+    )
 
 
 async def _show_last(message: Message, session: AsyncSession, telegram_user: TelegramUser) -> None:
@@ -605,7 +749,14 @@ async def _send_preview(message: Message, data: dict[str, object], language: str
     chunks = split_preview(build_preview(data, language))
     for chunk in chunks[:-1]:
         await message.answer(chunk)
-    await message.answer(chunks[-1], reply_markup=review_keyboard(language))
+    await message.answer(
+        chunks[-1],
+        reply_markup=(
+            portfolio_review_keyboard(language)
+            if data.get("document_type") == "portfolio"
+            else review_keyboard(language)
+        ),
+    )
 
 
 @router.message(Command("my_cv"))
@@ -781,9 +932,7 @@ async def collect_voice(
         await message.answer(text("voice_error", user.language_code))
         return
 
-    await message.answer(
-        text("voice_transcribed", user.language_code, answer=escape(answer))
-    )
+    await message.answer(text("voice_transcribed", user.language_code, answer=escape(answer)))
     logger.info(
         "Voice transcribed: language=%s, chars=%d, current_step=%s",
         user.language_code,
@@ -877,14 +1026,29 @@ async def _handle_employment_answer(
         if field == "period":
             value = normalize_employment_period(raw_answer)
         elif field == "workplace":
-            parsed = parse_employment_entries(raw_answer)
-            value = parsed[0].workplace if parsed else raw_answer.strip()
+            # Repair drafts created before generic da/de workplaces such as
+            # maktabida were understood by the parser.
+            reparsed = parse_employment_entries(current.position or "")
+            repaired = reparsed[0] if reparsed else None
+            if repaired and repaired.workplace and repaired.position:
+                current = EmploymentEntry(
+                    period=current.period,
+                    workplace=repaired.workplace,
+                    position=repaired.position,
+                )
+                entries[index] = current
+                value = current.workplace
+            else:
+                parsed = parse_employment_entries(raw_answer)
+                value = (
+                    parsed[0].workplace
+                    if parsed and parsed[0].workplace
+                    else normalize_employment_workplace(raw_answer)
+                )
         else:
             value = normalize_answer(STEP_BY_KEY["objective_position"], raw_answer)
         if not value:
-            await message.answer(
-                _employment_detail_question(current, index, field, language)
-            )
+            await message.answer(_employment_detail_question(current, index, field, language))
             return True
         entries[index] = EmploymentEntry(
             period=value if field == "period" else current.period,
@@ -906,18 +1070,14 @@ async def _handle_employment_answer(
             session,
             draft,
             data_updates={
-                "pending_employment_entries": [
-                    _employment_entry_data(entry) for entry in entries
-                ],
+                "pending_employment_entries": [_employment_entry_data(entry) for entry in entries],
                 "pending_employment_editing": editing,
             },
             status="collecting",
             current_step=step_key,
         )
         index, field = missing
-        await message.answer(
-            _employment_detail_question(entries[index], index, field, language)
-        )
+        await message.answer(_employment_detail_question(entries[index], index, field, language))
         return True
 
     await update_draft_flow(
@@ -953,6 +1113,10 @@ async def collect_text(
     draft = await get_current_resume(session, user.id)
     if draft is not None and draft.status == "portfolio_token":
         token = raw_answer.strip()
+        try:
+            await message.delete()
+        except TelegramBadRequest:
+            logger.warning("Could not delete the one-time Netlify token message")
         site_name = f"hujjat-portfolio-{message.from_user.id}"
         status_message = await message.answer("Portfolio Netlify’ga joylanmoqda...")
         try:
@@ -992,25 +1156,40 @@ async def collect_text(
                 updates["location"] = lines[2]
         else:
             custom = list(draft.data.get("portfolio_sections", []))
-            custom.append({"title": section.title(), "content": raw_answer.strip()})
+            custom = [
+                item for item in custom if not isinstance(item, dict) or item.get("key") != section
+            ]
+            custom.append({"key": section, "title": section.title(), "content": raw_answer.strip()})
             updates = {"portfolio_sections": custom}
         selected = [str(item) for item in draft.data.get("portfolio_selected_sections", [])]
+        selected_set = set(selected)
+        selected = [code for code in _PORTFOLIO_SECTION_ORDER if code in selected_set]
         index = int(draft.data.get("portfolio_section_index", 0)) + 1
         if index < len(selected):
             next_section = selected[index]
             draft = await update_draft_flow(
-                session, draft, data_updates={**updates, "portfolio_active_section": next_section,
-                                              "portfolio_section_index": index},
-                status="collecting", current_step="portfolio_section",
+                session,
+                draft,
+                data_updates={
+                    **updates,
+                    "portfolio_active_section": next_section,
+                    "portfolio_section_index": index,
+                },
+                status="collecting",
+                current_step="portfolio_section",
             )
             await message.answer(
                 "Bo‘lim saqlandi. Keyingi bo‘lim:\n\n"
-                + _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][next_section]
+                + _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][next_section],
+                reply_markup=portfolio_step_keyboard(user.language_code),
             )
         else:
             draft = await update_draft_flow(
-                session, draft, data_updates=updates,
-                remove_keys=("portfolio_active_section",), status="review",
+                session,
+                draft,
+                data_updates=updates,
+                remove_keys=("portfolio_active_section",),
+                status="review",
                 current_step="portfolio_sections",
             )
             await _send_preview(message, draft.data, user.language_code)
@@ -1021,9 +1200,18 @@ async def collect_text(
     # answers inside an active form.  The current step already defines what
     # this message means; Gemini is reserved for commands and free-form chat.
     decision = local_message_decision(raw_answer)
-    active_form = draft is not None and draft.status in {
-        "collecting", "confirming_list", "confirming_edit_list", "editing", "editing_list",
-    } and step is not None
+    active_form = (
+        draft is not None
+        and draft.status
+        in {
+            "collecting",
+            "confirming_list",
+            "confirming_edit_list",
+            "editing",
+            "editing_list",
+        }
+        and step is not None
+    )
     if decision is None and active_form:
         decision = AssistantDecision(intent="form_answer", answer_value=raw_answer)
     elif decision is None and draft is not None and draft.status == "awaiting_photo":
@@ -1828,7 +2016,8 @@ async def approve_callback(callback: CallbackQuery, session: AsyncSession) -> No
             "Netlify Personal Access Token yuboring. Token saqlanmaydi; faqat bir martalik "
             "deploy uchun ishlatiladi.\n"
             "Tokenni Netlify → User settings → Applications → Personal access tokens "
-            "bo‘limidan oling."
+            "bo‘limidan oling.",
+            reply_markup=portfolio_token_keyboard(user.language_code),
         )
         return
     await callback.message.answer(

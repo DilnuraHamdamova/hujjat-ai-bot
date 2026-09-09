@@ -364,7 +364,7 @@ class DocumentGenerator:
     ) -> None:
         heading = document.add_paragraph()
         heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = heading.add_run(f"{full_name}ning yaqin qarindoshlari to‘g‘risida\nMA’LUMOT")
+        run = heading.add_run(f"{full_name} — {labels['relatives']}")
         run.bold = True
         table = document.add_table(rows=1, cols=5)
         table.style = "Table Grid"

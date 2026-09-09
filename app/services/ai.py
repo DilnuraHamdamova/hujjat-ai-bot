@@ -91,8 +91,10 @@ def local_message_decision(message: str) -> AssistantDecision | None:
         (
             "skip",
             (
-                "keyingi savol", "keyingisiga o't", "keyingisiga ot", "buni tashlab o't",
-                "buni tashlab ot", "o'tkazib yubor", "otkazib yubor",
+                "keyingi savol", "keyingi savolga o't", "keyingi savolga ot",
+                "keyingisiga o't", "keyingisiga ot", "davom et", "davom etamiz",
+                "davom eting", "buni tashlab o't", "buni tashlab ot", "o'tkazish",
+                "otkazish", "o'tkazib yubor", "otkazib yubor", "skip",
             ),
         ),
     )

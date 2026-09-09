@@ -39,33 +39,34 @@ TEXTS: dict[str, dict[Language, str]] = {
     },
     "portfolio_example": {
         "uz": (
-            "✨ <b>Professional portfolio namunasi</b>\n\n"
-            "<b>PROFILE</b>\nAli Valiyev — Product Designer\nToshkent, O‘zbekiston\n\n"
-            "<b>ABOUT</b>\nMen foydalanuvchi muammolarini sodda va chiroyli raqamli "
-            "mahsulotlarga aylantiruvchi dizaynerman.\n\n"
-            "<b>SKILLS</b>\nUX Research · Figma · Prototyping · Design Systems\n\n"
-            "<b>EXPERIENCE</b>\nProduct Designer — Tech Company (2022–hozirgacha)\n\n"
-            "<b>CONTACT</b>\nali@example.com\n\n"
-            "Shu namuna kabi aniq, qisqa va professional ma’lumot kiriting."
+            "✨ <b>Professional dasturchi portfolio namunasi</b>\n\n"
+            "<b>PROFILE</b> · Ali Valiyev — Software Engineer\n"
+            "<b>ABOUT</b> · Ishonchli va qulay raqamli mahsulotlar yarataman.\n"
+            "<b>SKILLS</b> · Python · FastAPI · React · PostgreSQL · Cloud\n"
+            "<b>EXPERIENCE</b> · Senior Engineer — Nexus Labs\n"
+            "<b>EDUCATION</b> · BSc Software Engineering\n"
+            "<b>PROJECTS</b> · Analytics Platform · Fintech App · CLI Toolkit\n"
+            "<b>CERTIFICATES</b> · AWS Solutions Architect\n"
+            "<b>PUBLICATIONS</b> · Resilient systems maqolasi\n"
+            "<b>LANGUAGES</b> · O‘zbek · English C1 · Русский B2\n"
+            "<b>ACHIEVEMENTS / VLOG</b> · Open Source Impact Award\n"
+            "<b>LINKS</b> · GitHub · LinkedIn · Telegram\n"
+            "<b>CONTACT</b> · ali@example.com\n\n"
+            "Quyidagi tugma orqali to‘liq professional saytni ko‘ring."
         ),
         "en": (
-            "✨ <b>Professional portfolio example</b>\n\n"
-            "<b>PROFILE</b>\nAli Valiyev — Product Designer\nTashkent, Uzbekistan\n\n"
-            "<b>ABOUT</b>\nI turn user problems into simple, beautiful digital products.\n\n"
-            "<b>SKILLS</b>\nUX Research · Figma · Prototyping · Design Systems\n\n"
-            "<b>EXPERIENCE</b>\nProduct Designer — Tech Company (2022–present)\n\n"
-            "<b>CONTACT</b>\nali@example.com\n\n"
-            "Use this example as a guide: keep your information clear, concise, and professional."
+            "✨ <b>Professional developer portfolio example</b>\n\n"
+            "Profile · About · Skills · Experience · Education · Projects\n"
+            "Certificates · Publications · Languages · Achievements / Vlog\n"
+            "Links &amp; Profiles · Contact\n\n"
+            "Open the complete professional website with the button below."
         ),
         "ru": (
-            "✨ <b>Пример профессионального портфолио</b>\n\n"
-            "<b>PROFILE</b>\nАли Валиёв — Product Designer\nТашкент, Узбекистан\n\n"
-            "<b>ABOUT</b>\nПревращаю задачи пользователей в простые и красивые цифровые "
-            "продукты.\n\n"
-            "<b>SKILLS</b>\nUX Research · Figma · Prototyping · Design Systems\n\n"
-            "<b>EXPERIENCE</b>\nProduct Designer — Tech Company (2022–сейчас)\n\n"
-            "<b>CONTACT</b>\nali@example.com\n\n"
-            "Ориентируйтесь на этот пример: пишите ясно, кратко и профессионально."
+            "✨ <b>Пример профессионального портфолио разработчика</b>\n\n"
+            "Профиль · Обо мне · Навыки · Опыт · Образование · Проекты\n"
+            "Сертификаты · Публикации · Языки · Достижения / Влог\n"
+            "Ссылки и профили · Контакты\n\n"
+            "Полный профессиональный сайт доступен по кнопке ниже."
         ),
     },
     "portfolio_choose_template": {
@@ -489,16 +490,9 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Выберите уровень образования:",
     },
     "objective_graduated": {
-        "uz": (
-            "Shu bosqichdagi ta’lim muassasasi va o‘qigan yillaringizni "
-            "kiriting:"
-        ),
-        "en": (
-            "Enter the institution and study years for this stage:"
-        ),
-        "ru": (
-            "Укажите учебное заведение и годы обучения на этой ступени:"
-        ),
+        "uz": ("Shu bosqichdagi ta’lim muassasasi va o‘qigan yillaringizni kiriting:"),
+        "en": ("Enter the institution and study years for this stage:"),
+        "ru": ("Укажите учебное заведение и годы обучения на этой ступени:"),
     },
     "objective_specialty": {
         "uz": "Shu ta’lim bo‘yicha mutaxassisligingizni kiriting:",
@@ -531,9 +525,18 @@ STEP_PROMPTS: dict[str, dict[Language, str]] = {
         "ru": "Укажите членство в выборных органах. Если нет, отправьте '-':",
     },
     "objective_employment": {
-        "uz": "Mehnat faoliyatingizdagi bitta davrni kiriting:",
-        "en": "Enter one period from your employment history:",
-        "ru": "Введите один период трудовой деятельности:",
+        "uz": (
+            "Mehnat faoliyatingizdagi bitta davrni kiriting. Ishlamagan bo‘lsangiz '-' yuboring "
+            "(masalan: 2021–2025 — Toshkent davlat iqtisodiyot universiteti talabasi):"
+        ),
+        "en": (
+            "Enter one period from your employment history. Send '-' if you have none "
+            "(example: 2021–2025 — TSUE student):"
+        ),
+        "ru": (
+            "Укажите один период трудовой деятельности. Если не работали, отправьте '-' "
+            "(пример: 2021–2025 — студент ТГЭУ):"
+        ),
     },
     "objective_relatives": {
         "uz": "Sizda bor yaqin qarindoshlarni tugmalar orqali belgilang:",

@@ -8,6 +8,7 @@ from app.services.resume_flow import (
     build_preview,
     next_step,
     normalize_answer,
+    normalize_employment_workplace,
     parse_answer,
     parse_employment_entries,
     previous_step,
@@ -89,6 +90,28 @@ def test_spoken_employment_is_converted_to_document_format() -> None:
     ]
 
 
+def test_objective_values_are_formatted_for_official_document() -> None:
+    assert normalize_answer(
+        STEP_BY_KEY["objective_birth_place"],
+        "qashqadaryo viloyati, kitob tumani",
+    ) == "Qashqadaryo viloyati, Kitob tumani"
+    assert parse_employment_entries(
+        "2021-yil sentabr 2022-yil oktabr 2-sonli maktabda o'qituvchi"
+    ) == [
+        EmploymentEntry(
+            period="2021-yil sentabrdan 2022-yil oktabrgacha",
+            workplace="2-sonli maktabda",
+            position="o'qituvchi",
+        )
+    ]
+
+
+def test_generic_workplace_is_not_accepted_without_specific_name() -> None:
+    entries = parse_employment_entries("2021-yil sentabr 2022-yil oktabr Maktabda o'qituvchi")
+    assert entries[0].workplace is None
+    assert entries[0].position == "o'qituvchi"
+
+
 @pytest.mark.parametrize(
     ("step_key", "spoken", "expected"),
     [
@@ -100,13 +123,13 @@ def test_spoken_employment_is_converted_to_document_format() -> None:
         ("objective_position", "Big IT kompaniyasida menejer bo'lib ishlayman", "menejer"),
         ("objective_birth_date", "1998-yil 12-martda tug'ilganman", "12.03.1998"),
         ("objective_birth_place", "Toshkent shahrida tug'ilganman", "Toshkent shahri"),
-        ("objective_nationality", "Millatim o'zbek", "o'zbek"),
+        ("objective_nationality", "Millatim o'zbek", "O'zbek"),
         ("objective_party", "XDP partiyasiga a'zoman", "XDP"),
         ("objective_education_level", "Ma'lumotim oliy", "oliy"),
         (
             "objective_graduated",
             "TDIUda 2021 yildan 2025 yilgacha o'qiganman",
-            "TDIU, 2021–2025",
+            "Toshkent davlat iqtisodiyot universiteti, 2021–2025",
         ),
         ("objective_specialty", "Mutaxassisligim iqtisodiyot", "iqtisodiyot"),
         ("objective_degree", "Ilmiy darajam PhD", "PhD"),
@@ -163,6 +186,25 @@ def test_multiple_employments_are_split_and_missing_details_are_detected() -> No
             position="dasturchi",
         ),
     ]
+
+
+def test_school_employment_is_split_into_workplace_and_position() -> None:
+    assert parse_employment_entries(
+        "2-sonli davlat maktabida ingliz tili o'qituvchisi"
+    ) == [
+        EmploymentEntry(
+            period=None,
+            workplace="2-sonli davlat maktabida",
+            position="ingliz tili o'qituvchisi",
+        )
+    ]
+
+    assert (
+        normalize_employment_workplace(
+            "2019-2020 yillar davlat maktabida ishlaganman"
+        )
+        == "davlat maktabida"
+    )
 
 
 def test_employment_parser_preserves_known_fields_when_another_is_missing() -> None:

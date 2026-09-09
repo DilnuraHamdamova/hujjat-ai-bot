@@ -12,6 +12,12 @@ from app.bot.keyboards import (
     objective_education_level_keyboard,
     output_format_keyboard,
     photo_navigation_keyboard,
+    portfolio_ready_keyboard,
+    portfolio_review_keyboard,
+    portfolio_sections_keyboard,
+    portfolio_step_keyboard,
+    portfolio_template_keyboard,
+    portfolio_token_keyboard,
     question_navigation_keyboard,
     relative_more_keyboard,
     relatives_keyboard,
@@ -20,6 +26,7 @@ from app.bot.keyboards import (
 )
 from app.documents.generator import DocumentGenerator
 from app.services.localization import normalize_language, step_prompt, text
+from app.services.portfolio import render_portfolio
 from app.services.resume_flow import OBJECTIVE_STEPS, STEP_BY_KEY, build_preview, validate_answer
 from app.services.templates import TEMPLATE_CODES
 
@@ -68,10 +75,11 @@ def test_template_gallery_uses_telegram_webapp_when_configured(monkeypatch) -> N
         lambda: SimpleNamespace(template_webapp_url="https://example.com/webapp/templates"),
     )
     keyboard = cv_template_keyboard("uz")
-    open_button = keyboard.keyboard[0][0]
+    open_button = keyboard.inline_keyboard[0][0]
     assert open_button.web_app is not None
     assert open_button.web_app.url == "https://example.com/webapp/templates"
     assert "Shablonlarni ko‘rish" in open_button.text
+    assert keyboard.inline_keyboard[-1][0].callback_data == "document:choose"
 
 
 def test_cv_photo_is_optional_without_template_back_button() -> None:
@@ -160,3 +168,82 @@ def test_docx_headings_use_selected_language(tmp_path) -> None:
         document_xml = archive.read("word/document.xml").decode()
     assert "PROFILE" in document_xml
     assert "SKILLS" in document_xml
+
+
+def test_portfolio_flow_has_example_link_order_and_back_buttons() -> None:
+    ready = portfolio_ready_keyboard("uz", "https://demo.netlify.app")
+    assert ready.inline_keyboard[0][0].url == "https://demo.netlify.app"
+    assert ready.inline_keyboard[-1][0].callback_data == "portfolio:back:documents"
+    assert portfolio_template_keyboard("uz").inline_keyboard[-1][0].callback_data == (
+        "portfolio:back:example"
+    )
+    sections = portfolio_sections_keyboard(
+        "uz", ["achievements", "about", "profile"]
+    ).inline_keyboard
+    callbacks = [row[0].callback_data for row in sections]
+    assert callbacks[:5] == [
+        "portfolio-section:profile",
+        "portfolio-section:about",
+        "portfolio-section:skills",
+        "portfolio-section:experience",
+        "portfolio-section:education",
+    ]
+    assert callbacks[-2:] == ["portfolio:start", "portfolio:back:templates"]
+    assert portfolio_step_keyboard("uz").inline_keyboard[0][0].callback_data == (
+        "portfolio:back:section"
+    )
+    assert portfolio_review_keyboard("uz").inline_keyboard[0][0].callback_data == (
+        "portfolio:back:last"
+    )
+    assert portfolio_token_keyboard("uz").inline_keyboard[0][0].callback_data == (
+        "portfolio:back:review"
+    )
+
+
+def test_generated_portfolio_renders_all_supported_content() -> None:
+    document = render_portfolio(
+        {
+            "portfolio_template": "developer",
+            "full_name": "Ali & Vali",
+            "job_title": "Backend Developer",
+            "portfolio_tagline": "Reliable products",
+            "summary": "About me",
+            "skills": ["Python", "PostgreSQL"],
+            "experience": ["Senior Engineer"],
+            "education": ["BSc Software Engineering"],
+            "languages": ["English — C1"],
+            "email": "ali@example.com",
+            "phone": "+998 90 000 00 00",
+            "location": "Tashkent",
+            "portfolio_sections": [
+                {
+                    "key": "projects",
+                    "title": "Projects",
+                    "content": "Hujjat AI https://example.com/demo",
+                },
+                {"key": "certificates", "title": "Certificates", "content": "AWS"},
+                {"key": "publications", "title": "Publications", "content": "Article"},
+                {"key": "achievements", "title": "Achievements", "content": "Award"},
+                {"key": "links", "title": "Links", "content": "https://github.com/example"},
+            ],
+        }
+    )
+    for value in (
+        "Ali &amp; Vali",
+        "About",
+        "Skills",
+        "Experience",
+        "Education",
+        "Languages",
+        "Projects",
+        "Certificates",
+        "Publications",
+        "Achievements",
+        "Links",
+        "Contact",
+    ):
+        assert value in document
+    assert 'target="_blank"' in document
+    assert 'href="https://example.com/demo"' in document
+    assert 'href="https://github.com/example"' in document
+    assert "grid-template-columns:1fr" in document

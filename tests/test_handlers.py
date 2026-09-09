@@ -92,3 +92,65 @@ async def test_multiple_employments_request_and_fill_missing_position(
         "2026-yil aprel – hozir | Big IT kompaniyasi | dasturchi",
     ]
     assert "pending_employment_entries" not in draft.data
+
+
+@pytest.mark.asyncio
+async def test_school_answer_does_not_repeat_workplace_question(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    message = FakeMessage()
+    draft = SimpleNamespace(
+        data={
+            "pending_employment_entries": [
+                {
+                    "period": "2019 – 2020",
+                    "workplace": None,
+                    "position": "2-sonli davlat maktabida ingliz tili o'qituvchisi",
+                }
+            ],
+            "pending_employment_editing": False,
+        },
+        status="collecting",
+        current_step="objective_employment",
+    )
+    saved_values: list[str] = []
+
+    async def fake_update(
+        _: object,
+        current_draft: SimpleNamespace,
+        *,
+        data_updates: dict[str, object] | None = None,
+        remove_keys: tuple[str, ...] = (),
+        **__: object,
+    ) -> SimpleNamespace:
+        for key in remove_keys:
+            current_draft.data.pop(key, None)
+        if data_updates:
+            current_draft.data.update(data_updates)
+        return current_draft
+
+    async def fake_append(
+        _: object,
+        __: object,
+        *,
+        values: list[str],
+        **___: object,
+    ) -> None:
+        saved_values.extend(values)
+
+    monkeypatch.setattr("app.bot.handlers.update_draft_flow", fake_update)
+    monkeypatch.setattr("app.bot.handlers.append_list_answer", fake_append)
+
+    await _handle_employment_answer(
+        message,
+        object(),
+        draft,
+        "objective_employment",
+        "Maktabda",
+        "uz",
+    )
+
+    assert saved_values == [
+        "2019 – 2020 | 2-sonli davlat maktabida | ingliz tili o'qituvchisi"
+    ]
+    assert not any("qaysi kompaniya" in answer for answer in message.answers)

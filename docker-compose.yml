@@ -36,6 +36,9 @@ services:
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
+    # Expose only on the VM loopback; access from IntelliJ uses an SSH tunnel.
+    ports:
+      - "127.0.0.1:15432:5432"
     environment:
       POSTGRES_DB: cvbot
       POSTGRES_USER: cvbot

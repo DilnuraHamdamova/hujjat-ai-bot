@@ -65,6 +65,7 @@ async def create_resume(
                     "adding_section_title",
                     "adding_section_content",
                     "portfolio_token",
+                    "portfolio_sections",
                 )
             ),
         )
@@ -106,6 +107,7 @@ async def get_current_resume(session: AsyncSession, user_id: UUID) -> ResumeDraf
                     "adding_section_title",
                     "adding_section_content",
                     "portfolio_token",
+                    "portfolio_sections",
                     "completed",
                 )
             ),

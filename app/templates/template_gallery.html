@@ -8,26 +8,37 @@
   <style>
     :root { color-scheme: light dark; }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 18px 14px 30px; color: var(--tg-theme-text-color, #17212b); background: var(--tg-theme-bg-color, #f4f6f8); font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    html { min-height: 100%; background: var(--tg-theme-bg-color, #f4f6f8); }
+    body { min-height: 100dvh; margin: 0; padding: max(18px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(30px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); color: var(--tg-theme-text-color, #17212b); background: var(--tg-theme-bg-color, #f4f6f8); font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-text-size-adjust: 100%; }
     header, main { max-width: 760px; margin: auto; }
     header { margin-bottom: 16px; }
     h1 { margin: 0 0 5px; font-size: 23px; }
     header p { margin: 0; color: var(--tg-theme-hint-color, #6b7280); }
     .families, .grid { display: grid; gap: 14px; }
-    .family { border: 1px solid rgba(120,130,145,.25); border-radius: 16px; padding: 18px; text-align: left; background: var(--tg-theme-secondary-bg-color, #fff); color: inherit; box-shadow: 0 7px 22px rgba(15,23,42,.08); cursor: pointer; }
+    .family { min-height: 74px; border: 1px solid rgba(120,130,145,.25); border-radius: 16px; padding: 18px; text-align: left; background: var(--tg-theme-secondary-bg-color, #fff); color: inherit; box-shadow: 0 7px 22px rgba(15,23,42,.08); cursor: pointer; touch-action: manipulation; }
     .family strong { display: block; font-size: 19px; margin-bottom: 3px; }
     .family span, .description { color: var(--tg-theme-hint-color, #6b7280); font-size: 13px; }
-    .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .back { border: 0; border-radius: 10px; padding: 9px 12px; background: var(--tg-theme-secondary-bg-color, #fff); color: inherit; font: inherit; cursor: pointer; }
+    .toolbar { position: sticky; top: max(0px, env(safe-area-inset-top)); z-index: 2; display: flex; align-items: center; gap: 10px; margin: 0 -4px 14px; padding: 6px 4px; background: var(--tg-theme-bg-color, #f4f6f8); }
+    .back { min-width: 48px; min-height: 48px; border: 0; border-radius: 12px; padding: 9px 12px; background: var(--tg-theme-secondary-bg-color, #fff); color: inherit; font: inherit; cursor: pointer; touch-action: manipulation; }
     .toolbar h2 { margin: 0; font-size: 20px; }
     .card { overflow: hidden; border: 1px solid rgba(120,130,145,.25); border-radius: 17px; background: var(--tg-theme-secondary-bg-color, #fff); box-shadow: 0 7px 22px rgba(15,23,42,.08); }
-    .preview { width: 100%; height: 430px; display: block; object-fit: contain; object-position: top; background: #292c32; }
+    .preview { width: 100%; height: clamp(300px, 62dvh, 560px); display: block; object-fit: contain; object-position: top; background: #292c32; }
     .content { display: flex; align-items: center; gap: 12px; padding: 13px; }
     .copy { flex: 1; }
     .copy h3 { margin: 0 0 2px; font-size: 18px; }
-    .choose { border: 0; border-radius: 11px; padding: 11px 16px; color: var(--tg-theme-button-text-color, #fff); background: var(--tg-theme-button-color, #2481cc); font: inherit; font-weight: 700; cursor: pointer; }
+    .choose { min-height: 48px; border: 0; border-radius: 11px; padding: 11px 16px; color: var(--tg-theme-button-text-color, #fff); background: var(--tg-theme-button-color, #2481cc); font: inherit; font-weight: 700; cursor: pointer; touch-action: manipulation; }
     button:active { transform: scale(.98); }
     [hidden] { display: none !important; }
+    @media (min-width: 720px) {
+      .families, .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .families .family:last-child { grid-column: 1 / -1; }
+    }
+    @media (max-width: 380px) {
+      body { padding-left: 10px; padding-right: 10px; }
+      h1 { font-size: 21px; }
+      .content { align-items: stretch; flex-direction: column; }
+      .choose { width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -47,6 +58,7 @@
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
+    if (typeof tg.disableVerticalSwipes === "function") tg.disableVerticalSwipes();
     const names = {classic: "Classic", modern: "Zamonaviy", europass: "Europass"};
     const descriptions = {
       classic: ["Sodda bir ustunli", "Qora yon panelli", "Markaziy rasmiy"],

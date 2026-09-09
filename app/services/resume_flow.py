@@ -78,7 +78,7 @@ OBJECTIVE_STEPS = (
     Step("objective_languages", "", is_list=True),
     Step("objective_awards", "", optional=True),
     Step("objective_elected", "", optional=True),
-    Step("objective_employment", "", is_list=True),
+    Step("objective_employment", "", is_list=True, optional=True),
     Step("objective_relatives", "", is_list=True),
 )
 
@@ -183,11 +183,27 @@ _MONTH_NUMBERS = {
     "dekabr": 12,
 }
 
+_ADJACENT_EMPLOYMENT_RANGE = re.compile(
+    rf"(?P<start>\d{{4}}\s*-?\s*yil\s+(?:{_MONTH_PATTERN}))\s+"
+    rf"(?P<end>\d{{4}}\s*-?\s*yil\s+(?:{_MONTH_PATTERN}))",
+    re.IGNORECASE,
+)
+_GENERIC_WORKPLACES = {
+    "maktabda", "maktabida", "universitetda", "universitetida",
+    "kollejda", "kollejida", "litseyda", "litseyida", "tashkilotda",
+    "tashkilotida", "muassasada", "muassasasida", "korxonada", "korxonasida",
+}
+
 
 def normalize_employment_period(value: str) -> str | None:
     clean = _apostrophes(value)
     match = _SPOKEN_EMPLOYMENT_RANGE.search(clean)
     if match is None:
+        adjacent = _ADJACENT_EMPLOYMENT_RANGE.search(clean)
+        if adjacent:
+            start = re.sub(r"\s+", " ", adjacent.group("start")).strip()
+            end = re.sub(r"\s+", " ", adjacent.group("end")).strip()
+            return f"{start}dan {end}gacha"
         canonical = re.search(
             r"(?P<start>\d{4}(?:-yil)?(?:\s+[A-Za-zА-Яа-я]+)?)\s*[–—-]\s*"
             r"(?P<end>(?:\d{4}(?:-yil)?(?:\s+[A-Za-zА-Яа-я]+)?|hozir))",
@@ -242,6 +258,10 @@ def parse_employment_entries(value: str) -> list[EmploymentEntry]:
         remainder = clause
         if range_match:
             remainder = f"{clause[:range_match.start()]} {clause[range_match.end():]}"
+        else:
+            adjacent_range = _ADJACENT_EMPLOYMENT_RANGE.search(clause)
+            if adjacent_range:
+                remainder = f"{clause[:adjacent_range.start()]} {clause[adjacent_range.end():]}"
         remainder = re.sub(r"^(?:va\s+|keyin\s+)", "", remainder, flags=re.IGNORECASE)
         remainder = re.sub(
             r"\s+(?:ishlaganman|ishladim|ishlayman)\.?$",
@@ -286,6 +306,37 @@ def parse_employment_entries(value: str) -> list[EmploymentEntry]:
                     position = raw_position
 
         if workplace is None and position is None:
+            titled_workplace = re.match(
+                r"(?P<workplace>.+?)\s+(?P<position>.+?)\s+lavozimida$",
+                remainder,
+                flags=re.IGNORECASE,
+            )
+            if titled_workplace:
+                workplace = normalize_employment_workplace(
+                    titled_workplace.group("workplace")
+                )
+                position = titled_workplace.group("position").strip(" ,.-")
+
+        if workplace is None and position is None:
+            generic_workplace = re.match(
+                r"(?P<workplace>.+?(?:da|de)(?=\s))\s+(?P<position>.+)$",
+                remainder,
+                flags=re.IGNORECASE,
+            )
+            if generic_workplace:
+                workplace = normalize_employment_workplace(
+                    generic_workplace.group("workplace")
+                )
+                if workplace and not is_specific_employment_workplace(workplace):
+                    workplace = None
+                position = re.sub(
+                    r"\s+bo'?lib$",
+                    "",
+                    generic_workplace.group("position"),
+                    flags=re.IGNORECASE,
+                ).strip(" ,.-")
+
+        if workplace is None and position is None:
             standalone_position = re.sub(
                 r"\s+bo'?lib$", "", remainder, flags=re.IGNORECASE
             ).strip(" ,.-")
@@ -303,6 +354,32 @@ def _canonical_workplace(name: str, kind: str) -> str:
     clean_name = re.sub(r"^(?:men\s+)", "", name, flags=re.IGNORECASE).strip(" ,.-")
     canonical_kind = _WORKPLACE_KINDS[kind.casefold()]
     return f"{clean_name} {canonical_kind}"
+
+
+def normalize_employment_workplace(value: str) -> str | None:
+    """Extract a useful workplace from a direct follow-up answer."""
+    clean = _apostrophes(" ".join(value.strip().split())).strip(" ,.-")
+    clean = re.sub(
+        r"^\d{4}\s*[–—-]\s*(?:\d{4}|hozir)\s*"
+        r"(?:(?:yillar|yil)\s*)?(?:davrida\s*)?",
+        "",
+        clean,
+        flags=re.IGNORECASE,
+    )
+    clean = re.sub(r"^(?:men\s+|shu\s+davrda\s+)", "", clean, flags=re.IGNORECASE)
+    clean = re.sub(
+        r"\s+(?:ishlaganman|ishladim|ishlayman)\.?$",
+        "",
+        clean,
+        flags=re.IGNORECASE,
+    ).strip(" ,.-")
+    clean = re.sub(r"universituti\b", "universiteti", clean, flags=re.IGNORECASE)
+    return clean or None
+
+
+def is_specific_employment_workplace(value: str) -> bool:
+    normalized = _apostrophes(value).strip(" ,.-").casefold()
+    return normalized not in _GENERIC_WORKPLACES
 
 
 def normalize_answer(step: Step, text: str) -> str:
@@ -431,7 +508,13 @@ def _normalize_full_name(value: str) -> str:
         ),
         (r"bo'ladi", r"deb yoziladi"),
     )
-    return re.sub(r"^men\s+", "", clean, flags=re.IGNORECASE).strip()
+    return _capitalize_name(re.sub(r"^men\s+", "", clean, flags=re.IGNORECASE).strip())
+
+
+def _capitalize_name(value: str) -> str:
+    return " ".join(
+        word[:1].upper() + word[1:] for word in value.split() if word
+    )
 
 
 def _normalize_position(value: str) -> str:
@@ -554,11 +637,26 @@ def _normalize_birth_place(value: str) -> str:
         flags=re.IGNORECASE,
     )
     if match:
-        return match.group("place").strip(" ,.-")
-    return _strip_labeled_answer(
+        return _capitalize_place(match.group("place"))
+    return _capitalize_place(_strip_labeled_answer(
         clean,
         (r"tug'ilgan joyim", r"tug'ilgan manzilim"),
         (r"bo'ladi",),
+    ))
+
+
+def _capitalize_place(value: str) -> str:
+    clean = " ".join(value.strip().split())
+    region_district = re.match(
+        r"^(?P<region>.+?\bviloyati)\s+(?P<district>.+?\btumani)$",
+        clean,
+        flags=re.IGNORECASE,
+    )
+    if region_district and "," not in clean:
+        clean = f"{region_district.group('region')}, {region_district.group('district')}"
+    parts = [part.strip(" ,.-") for part in clean.split(",")]
+    return ", ".join(
+        part[:1].upper() + part[1:] for part in parts if part
     )
 
 
@@ -569,7 +667,10 @@ def _normalize_nationality(value: str) -> str:
         (r"millatiga mansubman", r"hisoblanadi", r"bo'ladi"),
     )
     match = re.fullmatch(r"(.+?)(?:man)", clean, flags=re.IGNORECASE)
-    return match.group(1).strip() if match else clean
+    clean = match.group(1).strip() if match else clean
+    if clean.casefold().replace("‘", "'").replace("’", "'") in {"ozbek", "o'zbek"}:
+        return "O'zbek"
+    return clean[:1].upper() + clean[1:] if clean else clean
 
 
 def _normalize_party(value: str) -> str:
@@ -616,6 +717,7 @@ def _normalize_education(value: str, *, objective: bool) -> str | None:
         ).strip(" ,.-")
     institution = re.sub(r"^(?:men\s+)", "", institution, flags=re.IGNORECASE)
     institution = re.sub(r"(?:da|de)$", "", institution, flags=re.IGNORECASE).strip()
+    institution = _expand_education_institution(institution)
     if not institution:
         return None
     start = re.search(r"\d{4}", match.group("start"))
@@ -624,6 +726,21 @@ def _normalize_education(value: str, *, objective: bool) -> str | None:
         return None
     period = f"{start.group(0)}–{end.group(0)}"
     return f"{institution}, {period}" if objective else f"{period} — {institution}"
+
+
+_EDUCATION_INSTITUTION_ALIASES = {
+    "tdiu": "Toshkent davlat iqtisodiyot universiteti",
+    "tatu": "Muhammad al-Xorazmiy nomidagi Toshkent axborot texnologiyalari universiteti",
+    "tdu": "Toshkent davlat universiteti",
+    "ozmu": "Mirzo Ulug‘bek nomidagi O‘zbekiston Milliy universiteti",
+    "o'zmu": "Mirzo Ulug‘bek nomidagi O‘zbekiston Milliy universiteti",
+    "tdyu": "Toshkent davlat yuridik universiteti",
+}
+
+
+def _expand_education_institution(value: str) -> str:
+    key = re.sub(r"[.\s]+", "", value.casefold())
+    return _EDUCATION_INSTITUTION_ALIASES.get(key, _capitalize_place(value))
 
 
 def _normalize_relative_birth(value: str) -> str:

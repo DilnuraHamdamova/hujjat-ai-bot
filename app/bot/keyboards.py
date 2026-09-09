@@ -1,8 +1,6 @@
 from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    KeyboardButton,
-    ReplyKeyboardMarkup,
     WebAppInfo,
 )
 
@@ -41,6 +39,14 @@ def document_type_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
     )
 
 
+def _portfolio_back_label(language: str) -> str:
+    return {
+        "uz": "⬅️ Ortga",
+        "en": "⬅️ Back",
+        "ru": "⬅️ Назад",
+    }[normalize_language(language)]
+
+
 def portfolio_template_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
     labels = ("◻️ Minimal", "✨ Modern", "🎨 Creative", "💻 Developer")
     codes = ("minimal", "modern", "creative", "developer")
@@ -48,6 +54,13 @@ def portfolio_template_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
         inline_keyboard=[
             [InlineKeyboardButton(text=label, callback_data=f"portfolio-template:{code}")]
             for code, label in zip(codes, labels, strict=True)
+        ]
+        + [
+            [
+                InlineKeyboardButton(
+                    text=_portfolio_back_label(language), callback_data="portfolio:back:example"
+                )
+            ]
         ]
     )
 
@@ -58,28 +71,46 @@ def portfolio_sections_keyboard(
     selected_set = set(selected or [])
     labels = {
         "uz": (
-            ("profile", "👤 Profil"), ("about", "📝 Men haqimda"), ("skills", "🛠 Ko‘nikmalar"),
-            ("experience", "💼 Ish tajribasi"), ("education", "🎓 Ta’lim"),
-            ("contact", "📬 Kontakt"), ("projects", "🚀 Loyihalar"),
-            ("certificates", "🏅 Sertifikatlar"), ("publications", "📚 Nashrlar"),
-            ("languages", "🌐 Tillar"), ("links", "🔗 Havolalar va profillar"),
+            ("profile", "👤 Profil"),
+            ("about", "📝 Men haqimda"),
+            ("skills", "🛠 Ko‘nikmalar"),
+            ("experience", "💼 Ish tajribasi"),
+            ("education", "🎓 Ta’lim"),
+            ("projects", "🚀 Loyihalar"),
+            ("certificates", "🏅 Sertifikatlar"),
+            ("publications", "📚 Nashrlar"),
+            ("languages", "🌐 Tillar"),
             ("achievements", "🏆 Yutuqlar / Vlog"),
+            ("links", "🔗 Havolalar va profillar"),
+            ("contact", "📬 Kontakt"),
         ),
         "en": (
-            ("profile", "👤 Profile"), ("about", "📝 About"), ("skills", "🛠 Skills"),
-            ("experience", "💼 Experience"), ("education", "🎓 Education"),
-            ("contact", "📬 Contact"), ("projects", "🚀 Projects"),
-            ("certificates", "🏅 Certificates"), ("publications", "📚 Publications"),
-            ("languages", "🌐 Languages"), ("links", "🔗 Links & Profiles"),
+            ("profile", "👤 Profile"),
+            ("about", "📝 About"),
+            ("skills", "🛠 Skills"),
+            ("experience", "💼 Experience"),
+            ("education", "🎓 Education"),
+            ("projects", "🚀 Projects"),
+            ("certificates", "🏅 Certificates"),
+            ("publications", "📚 Publications"),
+            ("languages", "🌐 Languages"),
             ("achievements", "🏆 Achievements / Vlog"),
+            ("links", "🔗 Links & Profiles"),
+            ("contact", "📬 Contact"),
         ),
         "ru": (
-            ("profile", "👤 Профиль"), ("about", "📝 Обо мне"), ("skills", "🛠 Навыки"),
-            ("experience", "💼 Опыт"), ("education", "🎓 Образование"),
-            ("contact", "📬 Контакты"), ("projects", "🚀 Проекты"),
-            ("certificates", "🏅 Сертификаты"), ("publications", "📚 Публикации"),
-            ("languages", "🌐 Языки"), ("links", "🔗 Ссылки и профили"),
+            ("profile", "👤 Профиль"),
+            ("about", "📝 Обо мне"),
+            ("skills", "🛠 Навыки"),
+            ("experience", "💼 Опыт"),
+            ("education", "🎓 Образование"),
+            ("projects", "🚀 Проекты"),
+            ("certificates", "🏅 Сертификаты"),
+            ("publications", "📚 Публикации"),
+            ("languages", "🌐 Языки"),
             ("achievements", "🏆 Достижения / Влог"),
+            ("links", "🔗 Ссылки и профили"),
+            ("contact", "📬 Контакты"),
         ),
     }[normalize_language(language)]
     rows = [
@@ -97,24 +128,81 @@ def portfolio_sections_keyboard(
         "ru": "➡️ Начать заполнение",
     }[normalize_language(language)]
     rows.append([InlineKeyboardButton(text=start, callback_data="portfolio:start")])
+    rows.append(
+        [
+            InlineKeyboardButton(
+                text=_portfolio_back_label(language), callback_data="portfolio:back:templates"
+            )
+        ]
+    )
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def portfolio_ready_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+def portfolio_ready_keyboard(language: str = "uz", example_url: str = "") -> InlineKeyboardMarkup:
     labels = {
         "uz": ("✅ Ha, boshlaymiz", "🔁 Namunani qayta ko‘rish"),
         "en": ("✅ Yes, start", "🔁 Show example again"),
         "ru": ("✅ Да, начать", "🔁 Показать пример"),
     }[normalize_language(language)]
-    return InlineKeyboardMarkup(inline_keyboard=[
+    rows = [
         [InlineKeyboardButton(text=labels[0], callback_data="portfolio-ready:yes")],
         [InlineKeyboardButton(text=labels[1], callback_data="portfolio-ready:again")],
-    ])
+    ]
+    if example_url:
+        view_label = {
+            "uz": "🌐 To‘liq namunani saytda ko‘rish",
+            "en": "🌐 View the full example website",
+            "ru": "🌐 Посмотреть полный пример на сайте",
+        }[normalize_language(language)]
+        rows.insert(0, [InlineKeyboardButton(text=view_label, url=example_url)])
+    rows.append(
+        [
+            InlineKeyboardButton(
+                text=_portfolio_back_label(language), callback_data="portfolio:back:documents"
+            )
+        ]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def cv_template_keyboard(
-    language: str = "uz",
-) -> InlineKeyboardMarkup | ReplyKeyboardMarkup:
+def portfolio_step_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=_portfolio_back_label(language), callback_data="portfolio:back:section"
+                )
+            ]
+        ]
+    )
+
+
+def portfolio_review_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    rows = list(review_keyboard(language).inline_keyboard)
+    rows.insert(
+        0,
+        [
+            InlineKeyboardButton(
+                text=_portfolio_back_label(language), callback_data="portfolio:back:last"
+            )
+        ],
+    )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def portfolio_token_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=_portfolio_back_label(language), callback_data="portfolio:back:review"
+                )
+            ]
+        ]
+    )
+
+
+def cv_template_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
     locale = normalize_language(language)
     back = {"uz": "⬅️ Ortga", "en": "⬅️ Back", "ru": "⬅️ Назад"}[locale]
     webapp_url = get_settings().template_webapp_url.strip()
@@ -124,11 +212,16 @@ def cv_template_keyboard(
             "en": "🎨 View and choose a template",
             "ru": "🎨 Посмотреть и выбрать шаблон",
         }[locale]
-        return ReplyKeyboardMarkup(
-            keyboard=[[KeyboardButton(text=open_gallery, web_app=WebAppInfo(url=webapp_url))]],
-            resize_keyboard=True,
-            one_time_keyboard=True,
-            input_field_placeholder=open_gallery,
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text=open_gallery,
+                        web_app=WebAppInfo(url=webapp_url),
+                    )
+                ],
+                [InlineKeyboardButton(text=back, callback_data="document:choose")],
+            ]
         )
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -165,9 +258,7 @@ def template_variant_keyboard(family: str, language: str = "uz") -> InlineKeyboa
         "europass": "Europass",
     }
     selected_family = family if family in family_names else "classic"
-    back = {"uz": "⬅️ Turlarga qaytish", "en": "⬅️ Back to styles", "ru": "⬅️ К стилям"}[
-        locale
-    ]
+    back = {"uz": "⬅️ Turlarga qaytish", "en": "⬅️ Back to styles", "ru": "⬅️ К стилям"}[locale]
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
