@@ -58,13 +58,35 @@ def portfolio_template_keyboard(language: str = "uz") -> InlineKeyboardMarkup:
     codes = ("minimal", "modern", "creative", "developer")
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text=label, callback_data=f"portfolio-template:{code}")]
+            [InlineKeyboardButton(text=label, callback_data=f"portfolio-family:{code}")]
             for code, label in zip(codes, labels, strict=True)
         ]
         + [
             [
                 InlineKeyboardButton(
                     text=_portfolio_back_label(language), callback_data="portfolio:back:example"
+                )
+            ]
+        ]
+    )
+
+
+def portfolio_variant_keyboard(family: str, language: str = "uz") -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    names = {
+        "uz": ("01 · Editorial", "02 · Studio", "03 · Signature"),
+        "en": ("01 · Editorial", "02 · Studio", "03 · Signature"),
+        "ru": ("01 · Editorial", "02 · Studio", "03 · Signature"),
+    }[locale]
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=name, callback_data=f"portfolio-template:{family}_{number}")]
+            for number, name in enumerate(names, 1)
+        ]
+        + [
+            [
+                InlineKeyboardButton(
+                    text=_portfolio_back_label(language), callback_data="portfolio:back:templates"
                 )
             ]
         ]

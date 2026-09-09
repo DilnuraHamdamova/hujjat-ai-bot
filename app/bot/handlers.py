@@ -40,6 +40,7 @@ from app.bot.keyboards import (
     portfolio_sections_keyboard,
     portfolio_step_keyboard,
     portfolio_template_keyboard,
+    portfolio_variant_keyboard,
     question_navigation_keyboard,
     relative_label,
     relative_more_keyboard,
@@ -513,14 +514,14 @@ async def portfolio_template_callback(callback: CallbackQuery, session: AsyncSes
     if callback.data is None:
         return
     template_code = callback.data.rsplit(":", 1)[-1]
-    if template_code not in {"minimal", "modern", "creative", "developer"}:
+    if template_code.rsplit("_", 1)[0] not in {"minimal", "modern", "creative", "developer"}:
         return
     user = await _user(session, callback.from_user)
     draft = await create_resume(session, user.id, document_type="portfolio")
     await update_draft_flow(
         session,
         draft,
-        data_updates={"portfolio_template": template_code},
+        data_updates={"portfolio_template": template_code.rsplit("_", 1)[0]},
         status="awaiting_photo",
         current_step="portfolio_sections",
     )
@@ -529,6 +530,20 @@ async def portfolio_template_callback(callback: CallbackQuery, session: AsyncSes
         await callback.message.answer(
             text("portfolio_photo_prompt", user.language_code),
             reply_markup=photo_navigation_keyboard(user.language_code, "portfolio"),
+        )
+
+
+@router.callback_query(F.data.startswith("portfolio-family:"))
+async def portfolio_family_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    family = callback.data.rsplit(":", 1)[-1] if callback.data else ""
+    if family not in {"minimal", "modern", "creative", "developer"}:
+        return
+    user = await _user(session, callback.from_user)
+    await callback.answer()
+    if isinstance(callback.message, Message):
+        await callback.message.answer(
+            text("portfolio_choose_variant", user.language_code),
+            reply_markup=portfolio_variant_keyboard(family, user.language_code),
         )
 
 

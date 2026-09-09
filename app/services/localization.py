@@ -189,6 +189,11 @@ TEXTS: dict[str, dict[Language, str]] = {
         "en": "Now choose a portfolio design:",
         "ru": "Теперь выберите дизайн портфолио:",
     },
+    "portfolio_choose_variant": {
+        "uz": "Uslub uchun 3 ta professional variantdan birini tanlang:",
+        "en": "Choose one of three professional variants for this style:",
+        "ru": "Выберите один из трёх профессиональных вариантов этого стиля:",
+    },
     "portfolio_ready_prompt": {
         "uz": "Namuna tushunarlimi? Portfolio yaratishni boshlaymizmi?",
         "en": "Is the example clear? Shall we start building your portfolio?",
