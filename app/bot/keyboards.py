@@ -593,14 +593,17 @@ def photo_navigation_keyboard(
     language: str = "uz", document_type: str = "cv"
 ) -> InlineKeyboardMarkup:
     locale = normalize_language(language)
-    if document_type == "cv":
+    if document_type in {"cv", "portfolio"}:
         skip_label = {
             "uz": "⏭ Rasmsiz davom etish",
             "en": "⏭ Continue without photo",
             "ru": "⏭ Продолжить без фото",
         }[locale]
         return InlineKeyboardMarkup(
-            inline_keyboard=[[InlineKeyboardButton(text=skip_label, callback_data="photo:skip")]]
+            inline_keyboard=[[InlineKeyboardButton(
+                text=skip_label,
+                callback_data="photo:skip" if document_type == "cv" else "portfolio-photo:skip",
+            )]]
         )
     label = {
         "uz": "⬅️ Orqaga",

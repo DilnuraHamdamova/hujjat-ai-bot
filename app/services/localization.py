@@ -255,6 +255,11 @@ TEXTS: dict[str, dict[Language, str]] = {
         "en": "✅ Your portfolio is ready. Unzip the file and upload index.html to any hosting.",
         "ru": "✅ Портфолио готово. Распакуйте ZIP и загрузите index.html на любой хостинг.",
     },
+    "portfolio_photo_prompt": {
+        "uz": "📸 Portfolio uchun profil rasmini yuboring yoki rasmsiz davom eting:",
+        "en": "📸 Send a profile photo for your portfolio, or continue without one:",
+        "ru": "📸 Отправьте фото для портфолио или продолжите без фото:",
+    },
     "choose_template": {
         "uz": "CV uchun shablonni tanlang:",
         "en": "Choose a resume template:",

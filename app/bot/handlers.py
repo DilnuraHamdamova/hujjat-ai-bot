@@ -442,6 +442,32 @@ async def skip_cv_photo_callback(callback: CallbackQuery, session: AsyncSession)
         await _send_step(callback.message, draft.current_step, user.language_code)
 
 
+@router.callback_query(F.data == "portfolio-photo:skip")
+async def skip_portfolio_photo_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    user = await _user(session, callback.from_user)
+    draft = await get_current_resume(session, user.id)
+    if (
+        draft is None
+        or draft.status != "awaiting_photo"
+        or draft.data.get("document_type") != "portfolio"
+    ):
+        await callback.answer(text("old_button", user.language_code), show_alert=True)
+        return
+    await update_draft_flow(
+        session,
+        draft,
+        remove_keys=("photo_path",),
+        status="portfolio_sections",
+        current_step="portfolio_sections",
+    )
+    await callback.answer()
+    if isinstance(callback.message, Message):
+        await callback.message.answer(
+            text("portfolio_sections_intro", user.language_code),
+            reply_markup=portfolio_sections_keyboard(user.language_code, []),
+        )
+
+
 @router.callback_query(F.data.in_({"document:recommendation", "document:portfolio"}))
 async def coming_soon_callback(callback: CallbackQuery, session: AsyncSession) -> None:
     user = await _user(session, callback.from_user)
@@ -495,14 +521,14 @@ async def portfolio_template_callback(callback: CallbackQuery, session: AsyncSes
         session,
         draft,
         data_updates={"portfolio_template": template_code},
-        status="portfolio_sections",
+        status="awaiting_photo",
         current_step="portfolio_sections",
     )
     await callback.answer()
     if callback.message:
         await callback.message.answer(
-            text("portfolio_sections_intro", user.language_code),
-            reply_markup=portfolio_sections_keyboard(user.language_code, []),
+            text("portfolio_photo_prompt", user.language_code),
+            reply_markup=photo_navigation_keyboard(user.language_code, "portfolio"),
         )
 
 
@@ -806,6 +832,15 @@ async def collect_photo(message: Message, session: AsyncSession, bot: Bot) -> No
     await bot.download(message.photo[-1], destination=photo_path)
     draft = await save_photo(session, draft, str(photo_path))
     await message.answer(text("photo_saved", user.language_code))
+    if draft.data.get("document_type") == "portfolio":
+        await update_draft_flow(
+            session, draft, status="portfolio_sections", current_step="portfolio_sections"
+        )
+        await message.answer(
+            text("portfolio_sections_intro", user.language_code),
+            reply_markup=portfolio_sections_keyboard(user.language_code, []),
+        )
+        return
     await _send_step(message, draft.current_step, user.language_code)
 
 
@@ -838,6 +873,15 @@ async def collect_photo_document(message: Message, session: AsyncSession, bot: B
     await bot.download(message.document, destination=photo_path)
     draft = await save_photo(session, draft, str(photo_path))
     await message.answer(text("photo_saved", user.language_code))
+    if draft.data.get("document_type") == "portfolio":
+        await update_draft_flow(
+            session, draft, status="portfolio_sections", current_step="portfolio_sections"
+        )
+        await message.answer(
+            text("portfolio_sections_intro", user.language_code),
+            reply_markup=portfolio_sections_keyboard(user.language_code, []),
+        )
+        return
     await _send_step(message, draft.current_step, user.language_code)
 
 
