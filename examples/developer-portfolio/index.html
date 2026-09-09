@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="uz">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Fictional Software Engineer portfolio example for the HujjatAI portfolio builder." />
-    <meta name="theme-color" content="#0a0a0a" />
-    <title>Alex Morgan — Software Engineer Portfolio Example</title>
+    <meta name="description" content="Alex Morgan — professional software engineer portfolio example." />
+    <meta name="theme-color" content="#070b0f" />
+    <title>Alex Morgan — Portfolio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -13,179 +13,132 @@
     <script src="script.js" defer></script>
   </head>
   <body>
-    <div class="noise" aria-hidden="true"></div>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+    <div class="grid-noise" aria-hidden="true"></div>
+
     <header class="site-header">
-      <a class="logo" href="#top" aria-label="Go to homepage">AM<span>.</span></a>
+      <a class="logo" href="#top" aria-label="Homepage">AM<span>.</span></a>
       <nav aria-label="Main navigation">
-        <a href="#work">Projects</a>
-        <a href="#experience">Experience</a>
-        <a href="#credentials">Credentials</a>
-        <a href="#about">About</a>
-        <a href="#contact">Contact</a>
+        <a href="#work" data-i18n="navWork">Loyihalar</a>
+        <a href="#about" data-i18n="navAbout">Men haqimda</a>
+        <a href="#experience" data-i18n="navExperience">Tajriba</a>
+        <a href="#credentials" data-i18n="navCredentials">Yutuqlar</a>
+        <a href="#contact" data-i18n="navContact">Bog‘lanish</a>
       </nav>
-      <a class="availability" href="#contact"><span></span> Available for work</a>
+      <div class="header-actions">
+        <div class="language-switcher" aria-label="Language">
+          <button type="button" data-language="uz">UZ</button>
+          <button type="button" data-language="en">EN</button>
+          <button type="button" data-language="ru">RU</button>
+        </div>
+        <a class="availability" href="#contact"><span></span><b data-i18n="available">Hamkorlik uchun ochiq</b></a>
+      </div>
     </header>
 
     <main id="top">
       <section class="hero section-pad">
         <div class="hero-copy">
-          <div class="hero-kicker reveal"><span>01</span> Example portfolio · Software Engineer</div>
-          <h1 class="reveal">Thoughtful software.<br /><em>Real impact.</em></h1>
-          <p class="hero-intro reveal">I’m Alex, a product-minded software engineer who turns complex ideas into fast, reliable digital experiences.</p>
+          <div class="hero-kicker reveal"><span>01</span><b data-i18n="heroKicker">Premium portfolio namunasi · Software Engineer</b></div>
+          <h1 class="reveal"><span data-i18n="heroTitleOne">G‘oyadan</span><br /><em data-i18n="heroTitleTwo">real natijagacha.</em></h1>
+          <p class="hero-intro reveal" data-i18n="heroIntro">Men Alex — murakkab g‘oyalarni tez, ishonchli va odamlar sevib ishlatadigan raqamli mahsulotlarga aylantiradigan dasturiy ta’minot muhandisiman.</p>
           <div class="hero-actions reveal">
-            <a class="primary-action" href="#work">Explore my work <span>↗</span></a>
-            <a class="text-action" href="#contact">Let’s work together</a>
+            <a class="primary-action" href="#work"><span data-i18n="exploreWork">Loyihalarni ko‘rish</span><b>↗</b></a>
+            <a class="text-action" href="#contact" data-i18n="workTogether">Birga ishlaymiz</a>
           </div>
           <div class="hero-meta reveal">
-            <div><strong>4+</strong><span>Years of experience</span></div>
-            <div><strong>20+</strong><span>Products shipped</span></div>
-            <div><strong>30K</strong><span>Active users served</span></div>
+            <div><strong>6+</strong><span data-i18n="yearsExperience">Yillik tajriba</span></div>
+            <div><strong>28</strong><span data-i18n="productsShipped">Ishga tushgan mahsulot</span></div>
+            <div><strong>1.2M</strong><span data-i18n="usersReached">Qamrab olingan foydalanuvchi</span></div>
           </div>
         </div>
-        <div class="hero-showcase reveal" aria-label="A sample of Alex Morgan's work">
-          <div class="showcase-head"><span>alex.dev / overview</span><span class="showcase-status">Live</span></div>
-          <div class="showcase-screen">
-            <div class="showcase-label">Currently building</div>
-            <h2>Analytics that turn<br />signals into decisions.</h2>
-            <div class="showcase-chart" aria-hidden="true">
-              <svg viewBox="0 0 520 170" preserveAspectRatio="none"><path d="M0 145 C58 132, 77 72, 132 95 S222 148, 274 82 S357 30, 405 50 S470 83, 520 18" /></svg>
-              <span class="chart-dot"></span>
-            </div>
-            <div class="showcase-foot"><span>TypeScript · React · Node.js</span><strong>+47% faster</strong></div>
+
+        <div class="hero-stage reveal" aria-label="Alex Morgan profile visualization">
+          <div class="stage-orbit orbit-one"></div><div class="stage-orbit orbit-two"></div>
+          <div class="profile-card">
+            <div class="profile-top"><span>AM / 001</span><span class="live"><i></i><b data-i18n="live">Jonli</b></span></div>
+            <div class="avatar-mark"><span>A</span><span>M</span></div>
+            <p data-i18n="profileLabel">PROFIL</p>
+            <h2>Alex Morgan</h2>
+            <h3 data-i18n="jobTitle">Senior dasturiy ta’minot muhandisi</h3>
+            <div class="profile-stack"><span>TypeScript</span><span>React</span><span>Node.js</span><span>Cloud</span></div>
           </div>
-          <div class="floating-note"><span>Latest result</span><strong>99.99%</strong><small>Platform uptime</small></div>
+          <div class="impact-card"><span data-i18n="latestImpact">So‘nggi natija</span><strong>−47%</strong><small data-i18n="apiLatency">API kechikishi</small></div>
+          <div class="location-pill">41.3111° N · 69.2797° E <span data-i18n="tashkent">Toshkent</span></div>
         </div>
       </section>
 
-      <section class="marquee" aria-label="Technology stack">
-        <div class="marquee-track">
-          <span>TypeScript</span><i>✦</i><span>React</span><i>✦</i><span>Node.js</span><i>✦</i><span>PostgreSQL</span><i>✦</i><span>Cloud</span><i>✦</i>
-          <span aria-hidden="true">TypeScript</span><i aria-hidden="true">✦</i><span aria-hidden="true">React</span><i aria-hidden="true">✦</i><span aria-hidden="true">Node.js</span><i aria-hidden="true">✦</i><span aria-hidden="true">PostgreSQL</span><i aria-hidden="true">✦</i><span aria-hidden="true">Cloud</span><i aria-hidden="true">✦</i>
+      <section class="stack-strip" aria-label="Skills">
+        <div class="stack-track">
+          <span>TypeScript</span><i>✦</i><span>React</span><i>✦</i><span>Node.js</span><i>✦</i><span>Python</span><i>✦</i><span>PostgreSQL</span><i>✦</i><span>AWS</span><i>✦</i>
+          <span aria-hidden="true">TypeScript</span><i aria-hidden="true">✦</i><span aria-hidden="true">React</span><i aria-hidden="true">✦</i><span aria-hidden="true">Node.js</span><i aria-hidden="true">✦</i><span aria-hidden="true">Python</span><i aria-hidden="true">✦</i><span aria-hidden="true">PostgreSQL</span><i aria-hidden="true">✦</i><span aria-hidden="true">AWS</span><i aria-hidden="true">✦</i>
         </div>
       </section>
 
       <section class="work section-pad" id="work">
-        <div class="section-heading reveal">
-          <div><span>02</span> Selected work</div>
-          <p>A few projects where engineering, product thinking, and good design came together.</p>
-        </div>
-
-        <div class="project-list">
-          <article class="project reveal">
-            <div class="project-number">01</div>
-            <div class="project-main">
-              <div class="project-visual visual-one">
-                <div class="dashboard-card">
-                  <div class="dash-top"><span></span><span></span><span></span></div>
-                  <div class="dash-grid"><div></div><div></div><div></div></div>
-                  <div class="chart"><svg viewBox="0 0 300 100"><path d="M0 86 C45 78, 49 38, 95 53 S161 83, 190 38 S257 7, 300 18" /></svg></div>
-                </div>
-              </div>
-              <div class="project-copy">
-                <div><span class="tag">Full-stack</span><span class="tag">2025</span></div>
-                <h2>Analytics<br />Platform</h2>
-                <p>A real-time business intelligence dashboard that transforms complex data into clear, actionable insights.</p>
-                <a href="#contact">View case study <span>↗</span></a>
-              </div>
+        <div class="section-heading reveal"><div><span>02</span><b data-i18n="selectedWork">Tanlangan loyihalar</b></div><p data-i18n="workIntro">Muhandislik, mahsulot strategiyasi va yuqori darajadagi dizayn birlashgan uch loyiha.</p></div>
+        <div class="project-grid">
+          <article class="project project-large reveal">
+            <div class="project-visual analytics-visual">
+              <div class="browser-bar"><i></i><i></i><i></i><span>pulse.ai / live</span></div>
+              <div class="metric-row"><div><span data-i18n="revenue">Daromad</span><strong>$2.84M</strong></div><b>+32.8%</b></div>
+              <svg class="metric-chart" viewBox="0 0 620 210" preserveAspectRatio="none"><defs><linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9ff55" stop-opacity=".35"/><stop offset="1" stop-color="#c9ff55" stop-opacity="0"/></linearGradient></defs><path class="area" d="M0 190 C55 180 72 115 128 136 S210 190 268 110 S350 32 406 72 S505 122 620 18 L620 210 L0 210Z"/><path class="line" d="M0 190 C55 180 72 115 128 136 S210 190 268 110 S350 32 406 72 S505 122 620 18"/></svg>
             </div>
+            <div class="project-copy"><div><span class="tag">AI · Analytics</span><span class="tag">2026</span></div><h2>Pulse<br />Intelligence</h2><p data-i18n="projectOneText">Murakkab biznes signallarini real vaqtda tushunarli qarorlarga aylantiruvchi AI tahlil platformasi.</p><a href="#contact"><span data-i18n="caseStudy">Keysni ko‘rish</span><b>↗</b></a></div>
           </article>
 
           <article class="project reveal">
-            <div class="project-number">02</div>
-            <div class="project-main reverse">
-              <div class="project-visual visual-two">
-                <div class="phone">
-                  <div class="phone-top"></div>
-                  <p>Good morning</p><strong>Your balance</strong><b>$24,680.00</b>
-                  <div class="phone-actions"><span>↑</span><span>↓</span><span>•••</span></div>
-                  <div class="mini-card"></div><div class="mini-card short"></div>
-                </div>
-              </div>
-              <div class="project-copy">
-                <div><span class="tag">Mobile</span><span class="tag">2024</span></div>
-                <h2>Finance<br />Experience</h2>
-                <p>A secure, accessible fintech experience designed to make everyday money decisions feel effortless.</p>
-                <a href="#contact">View case study <span>↗</span></a>
-              </div>
-            </div>
+            <div class="project-visual finance-visual"><div class="phone"><div class="phone-notch"></div><small data-i18n="balance">Umumiy balans</small><strong>$24,680</strong><div class="wallet-actions"><i>↑</i><i>↓</i><i>•••</i></div><div class="wallet-card"></div><div class="wallet-card short"></div></div></div>
+            <div class="project-copy"><div><span class="tag">Fintech · Mobile</span><span class="tag">2025</span></div><h2>Northstar<br />Finance</h2><p data-i18n="projectTwoText">Kundalik moliyaviy qarorlarni xavfsiz, sodda va tabiiy qiladigan mobil tajriba.</p><a href="#contact"><span data-i18n="caseStudy">Keysni ko‘rish</span><b>↗</b></a></div>
           </article>
 
           <article class="project reveal">
-            <div class="project-number">03</div>
-            <div class="project-main">
-              <div class="project-visual visual-three">
-                <div class="code-window">
-                  <div class="window-bar"><i></i><i></i><i></i></div>
-                  <pre><code><span>const</span> buildBetter = <span>async</span> () =&gt; {
-  <b>await</b> understand(problem);
-  <b>await</b> design(solution);
-  <b>return</b> ship(withCare);
-};</code></pre>
-                </div>
-              </div>
-              <div class="project-copy">
-                <div><span class="tag">Developer tools</span><span class="tag">2024</span></div>
-                <h2>Open-source<br />CLI Toolkit</h2>
-                <p>A developer-first command line toolkit that automates repetitive workflows and speeds up delivery.</p>
-                <a href="#contact">View case study <span>↗</span></a>
-              </div>
-            </div>
+            <div class="project-visual code-visual"><div class="code-window"><div class="code-head"><i></i><i></i><i></i><span>deploy.ts</span></div><pre><code><span>const</span> ship = <b>async</b> () =&gt; {
+  <em>await</em> understand(problem);
+  <em>await</em> design(system);
+  <span>return</span> deliver(impact);
+};</code></pre></div></div>
+            <div class="project-copy"><div><span class="tag">Open Source · DX</span><span class="tag">2025</span></div><h2>Orbit<br />Toolkit</h2><p data-i18n="projectThreeText">Jamoalarning takroriy ishlarini avtomatlashtirib, reliz jarayonini keskin tezlashtiradigan CLI vositalari.</p><a href="#contact"><span data-i18n="caseStudy">Keysni ko‘rish</span><b>↗</b></a></div>
           </article>
         </div>
       </section>
 
       <section class="about section-pad" id="about">
-        <div class="about-label reveal"><span>03</span> About</div>
-        <div class="about-grid">
-          <h2 class="reveal">Engineering with<br /><em>purpose.</em></h2>
-          <div class="about-copy reveal">
-            <p class="lead">I’m a software engineer focused on building products that solve real problems and stand the test of time.</p>
-            <p>My work sits at the intersection of clean architecture, intuitive interfaces, and measurable business impact. I care about the details — because that’s where good products become great.</p>
-            <div class="stats">
-              <div><strong>4+</strong><span>Years building</span></div>
-              <div><strong>20+</strong><span>Projects shipped</span></div>
-              <div><strong>99%</strong><span>Uptime obsessed</span></div>
-            </div>
-          </div>
-        </div>
+        <div class="about-label reveal"><span>03</span><b data-i18n="aboutLabel">Men haqimda</b></div>
+        <div class="about-grid"><h2 class="reveal"><span data-i18n="engineeringWith">Muhandislik —</span><br /><em data-i18n="withPurpose">aniq maqsad bilan.</em></h2><div class="about-copy reveal"><p class="lead" data-i18n="aboutLead">Men haqiqiy muammolarni hal qiladigan va vaqt sinovidan o‘tadigan mahsulotlar yaratishgani yaxshi ko‘raman.</p><p data-i18n="aboutBody">Ishim toza arxitektura, intuitiv interfeys va o‘lchanadigan biznes natijasi kesishgan nuqtada turadi. Men detallarni qadrlayman — chunki aynan detallar yaxshi mahsulotni ajoyib mahsulotga aylantiradi.</p><div class="principles"><span data-i18n="principleOne">Tizimli fikrlash</span><span data-i18n="principleTwo">Foydalanuvchi markazida</span><span data-i18n="principleThree">Natija bilan o‘lchash</span></div></div></div>
       </section>
 
       <section class="journey section-pad" id="experience">
-        <div class="section-heading reveal">
-          <div><span>04</span> Experience &amp; education</div>
-          <p>A track record of shipping reliable products and continuously deepening the craft.</p>
-        </div>
+        <div class="section-heading reveal"><div><span>04</span><b data-i18n="experienceEducation">Tajriba va ta’lim</b></div><p data-i18n="journeyIntro">Ishonchli mahsulotlarni yetkazish va mahoratni muntazam chuqurlashtirish yo‘li.</p></div>
         <div class="timeline">
-          <article class="timeline-item reveal"><time>2024 — Present</time><div><h3>Senior Software Engineer · Nexus Labs</h3><p>Led a six-person product squad, reduced API latency by 47%, and delivered an analytics platform used by 30K+ teams.</p></div></article>
-          <article class="timeline-item reveal"><time>2022 — 2024</time><div><h3>Full-stack Engineer · Orbit Systems</h3><p>Built cloud-native services and accessible React experiences while improving release frequency from monthly to weekly.</p></div></article>
-          <article class="timeline-item reveal"><time>2018 — 2022</time><div><h3>BSc, Software Engineering · Tashkent University of IT</h3><p>Graduated with honors. Focus: distributed systems, human-computer interaction, and applied machine learning.</p></div></article>
+          <article class="timeline-item reveal"><time data-i18n="presentDate">2024 — Hozirgacha</time><div><span data-i18n="experienceBadge">ISH TAJRIBASI</span><h3 data-i18n="experienceTitleOne">Senior dasturiy ta’minot muhandisi · Nexus Labs</h3><p data-i18n="experienceOne">Olti kishilik mahsulot jamoasini boshqardim, API kechikishini 47% kamaytirdim va 30 mingdan ortiq jamoa ishlatadigan tahlil platformasini yetkazdim.</p></div></article>
+          <article class="timeline-item reveal"><time>2022 — 2024</time><div><span data-i18n="experienceBadge">ISH TAJRIBASI</span><h3 data-i18n="experienceTitleTwo">Full-stack muhandis · Orbit Systems</h3><p data-i18n="experienceTwo">Cloud-native servislar va accessibility talablariga mos React interfeyslarini qurib, reliz davriyligini oylikdan haftalikka olib chiqdim.</p></div></article>
+          <article class="timeline-item reveal"><time>2018 — 2022</time><div><span data-i18n="educationBadge">TA’LIM</span><h3 data-i18n="educationTitle">Software Engineering bakalavri · TATU</h3><p data-i18n="educationText">Imtiyozli diplom. Asosiy yo‘nalishlar: taqsimlangan tizimlar, inson-kompyuter o‘zaro aloqasi va amaliy mashinaviy o‘rganish.</p></div></article>
         </div>
       </section>
 
       <section class="credentials section-pad" id="credentials">
-        <div class="section-heading reveal">
-          <div><span>05</span> Beyond the code</div>
-          <p>Credentials, knowledge sharing, languages, and the milestones that shape my work.</p>
-        </div>
+        <div class="section-heading reveal"><div><span>05</span><b data-i18n="beyondCode">Koddan tashqari</b></div><p data-i18n="credentialsIntro">Sertifikatlar, nashrlar, tillar va faoliyatimga yo‘nalish bergan yutuqlar.</p></div>
         <div class="credential-grid">
-          <article class="credential-card reveal"><span>Certificate</span><h3>AWS Certified Solutions Architect</h3><p>Amazon Web Services · 2025</p><a href="#contact">View credential ↗</a></article>
-          <article class="credential-card reveal"><span>Publication</span><h3>Designing resilient event-driven systems</h3><p>Engineering Notes · 8 min read</p><a href="#contact">Read article ↗</a></article>
-          <article class="credential-card reveal"><span>Languages</span><h3>Uzbek · Native<br>English · C1<br>Russian · B2</h3><p>Professional communication across global teams.</p></article>
-          <article class="credential-card reveal"><span>Achievement</span><h3>Open Source Impact Award</h3><p>Recognized for a developer toolkit with 4,800+ GitHub stars.</p><a href="#contact">Watch project vlog ↗</a></article>
+          <article class="credential-card reveal"><span data-i18n="certificate">SERTIFIKAT</span><strong>01</strong><h3>AWS Certified Solutions Architect</h3><p>Amazon Web Services · 2025</p><a href="#contact"><b data-i18n="viewCredential">Sertifikatni ko‘rish</b> ↗</a></article>
+          <article class="credential-card reveal"><span data-i18n="publication">NASHR</span><strong>02</strong><h3 data-i18n="publicationTitle">Bardoshli event-driven tizimlarni loyihalash</h3><p>Engineering Notes · 8 min</p><a href="#contact"><b data-i18n="readArticle">Maqolani o‘qish</b> ↗</a></article>
+          <article class="credential-card reveal"><span data-i18n="languages">TILLAR</span><strong>03</strong><h3 data-i18n-html="languageLevels">O‘zbek · Ona tili<br />Ingliz · C1<br />Rus · B2</h3><p data-i18n="languageText">Xalqaro jamoalarda professional muloqot.</p></article>
+          <article class="credential-card reveal"><span data-i18n="achievementVlog">YUTUQ / VLOG</span><strong>04</strong><h3 data-i18n="awardTitle">Open Source Impact Award</h3><p data-i18n="awardText">4 800+ GitHub yulduziga ega dasturchilar vositasi uchun e’tirof.</p><a href="#contact"><b data-i18n="watchVlog">Vlogni ko‘rish</b> ↗</a></article>
         </div>
+      </section>
+
+      <section class="profiles section-pad" id="profiles">
+        <div class="section-heading reveal"><div><span>06</span><b data-i18n="linksProfiles">Havolalar va profillar</b></div><p data-i18n="linksIntro">Kod, professional faoliyat va kundalik yangiliklarimni kuzating.</p></div>
+        <div class="profile-links reveal"><a href="https://github.com/" target="_blank" rel="noreferrer"><span>GitHub</span><b>↗</b></a><a href="https://www.linkedin.com/" target="_blank" rel="noreferrer"><span>LinkedIn</span><b>↗</b></a><a href="https://t.me/" target="_blank" rel="noreferrer"><span>Telegram</span><b>↗</b></a><a href="#contact"><span data-i18n="downloadResume">CV yuklab olish</span><b>↓</b></a></div>
       </section>
 
       <section class="contact section-pad" id="contact">
-        <div class="contact-kicker reveal"><span></span> Have a project in mind?</div>
-        <h2 class="reveal">Let’s build something<br /><em>remarkable.</em></h2>
-        <a class="email reveal" href="mailto:alex@example.com">alex@example.com <span>↗</span></a>
+        <div class="contact-kicker reveal"><span></span><b data-i18n="projectInMind">Yangi loyiha bormi?</b></div>
+        <h2 class="reveal"><span data-i18n="buildSomething">Birgalikda</span><br /><em data-i18n="remarkable">ajoyib narsa yaratamiz.</em></h2>
+        <div class="contact-grid reveal"><a class="email" href="mailto:alex@example.com">alex@example.com <span>↗</span></a><div><p data-i18n="location">Joylashuv</p><strong data-i18n="tashkentUzbekistan">Toshkent, O‘zbekiston</strong></div><div><p data-i18n="responseTime">Javob vaqti</p><strong data-i18n="withinDay">24 soat ichida</strong></div></div>
       </section>
     </main>
 
-    <footer>
-      <span>© <span id="year"></span> Alex Morgan · Fictional demo</span>
-      <div><a href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a><a href="https://www.linkedin.com/" target="_blank" rel="noreferrer">LinkedIn</a><a href="https://t.me/" target="_blank" rel="noreferrer">Telegram</a></div>
-      <a href="#top">Back to top ↑</a>
-    </footer>
+    <footer><span>© <span id="year"></span> Alex Morgan · <b data-i18n="fictionalDemo">Portfolio namuna</b></span><span data-i18n="crafted">Fikr, kod va mahorat bilan yaratildi</span><a href="#top"><span data-i18n="backTop">Yuqoriga</span> ↑</a></footer>
   </body>
 </html>

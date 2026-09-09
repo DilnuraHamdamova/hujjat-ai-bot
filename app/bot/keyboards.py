@@ -5,7 +5,13 @@ from aiogram.types import (
 )
 
 from app.core.config import get_settings
-from app.services.localization import OBJECTIVE_LABELS, PREVIEW_LABELS, Language, normalize_language
+from app.services.localization import (
+    OBJECTIVE_LABELS,
+    PORTFOLIO_SECTION_LABELS,
+    PREVIEW_LABELS,
+    Language,
+    normalize_language,
+)
 from app.services.resume_flow import STEP_BY_KEY, steps_for
 
 
@@ -69,58 +75,29 @@ def portfolio_sections_keyboard(
     language: str = "uz", selected: list[str] | None = None
 ) -> InlineKeyboardMarkup:
     selected_set = set(selected or [])
-    labels = {
-        "uz": (
-            ("profile", "👤 Profil"),
-            ("about", "📝 Men haqimda"),
-            ("skills", "🛠 Ko‘nikmalar"),
-            ("experience", "💼 Ish tajribasi"),
-            ("education", "🎓 Ta’lim"),
-            ("projects", "🚀 Loyihalar"),
-            ("certificates", "🏅 Sertifikatlar"),
-            ("publications", "📚 Nashrlar"),
-            ("languages", "🌐 Tillar"),
-            ("achievements", "🏆 Yutuqlar / Vlog"),
-            ("links", "🔗 Havolalar va profillar"),
-            ("contact", "📬 Kontakt"),
-        ),
-        "en": (
-            ("profile", "👤 Profile"),
-            ("about", "📝 About"),
-            ("skills", "🛠 Skills"),
-            ("experience", "💼 Experience"),
-            ("education", "🎓 Education"),
-            ("projects", "🚀 Projects"),
-            ("certificates", "🏅 Certificates"),
-            ("publications", "📚 Publications"),
-            ("languages", "🌐 Languages"),
-            ("achievements", "🏆 Achievements / Vlog"),
-            ("links", "🔗 Links & Profiles"),
-            ("contact", "📬 Contact"),
-        ),
-        "ru": (
-            ("profile", "👤 Профиль"),
-            ("about", "📝 Обо мне"),
-            ("skills", "🛠 Навыки"),
-            ("experience", "💼 Опыт"),
-            ("education", "🎓 Образование"),
-            ("projects", "🚀 Проекты"),
-            ("certificates", "🏅 Сертификаты"),
-            ("publications", "📚 Публикации"),
-            ("languages", "🌐 Языки"),
-            ("achievements", "🏆 Достижения / Влог"),
-            ("links", "🔗 Ссылки и профили"),
-            ("contact", "📬 Контакты"),
-        ),
-    }[normalize_language(language)]
+    icons = {
+        "profile": "👤",
+        "about": "📝",
+        "skills": "🛠",
+        "experience": "💼",
+        "education": "🎓",
+        "projects": "🚀",
+        "certificates": "🏅",
+        "publications": "📚",
+        "languages": "🌐",
+        "achievements": "🏆",
+        "links": "🔗",
+        "contact": "📬",
+    }
+    labels = PORTFOLIO_SECTION_LABELS[normalize_language(language)]
     rows = [
         [
             InlineKeyboardButton(
-                text=("✅ " if code in selected_set else "⬜ ") + label,
+                text=("✅ " if code in selected_set else "⬜ ") + f"{icons[code]} {label}",
                 callback_data=f"portfolio-section:{code}",
             )
         ]
-        for code, label in labels
+        for code, label in labels.items()
     ]
     start = {
         "uz": "➡️ To‘ldirishni boshlash",
@@ -154,7 +131,9 @@ def portfolio_ready_keyboard(language: str = "uz", example_url: str = "") -> Inl
             "en": "🌐 View the full example website",
             "ru": "🌐 Посмотреть полный пример на сайте",
         }[normalize_language(language)]
-        rows.insert(0, [InlineKeyboardButton(text=view_label, url=example_url)])
+        separator = "&" if "?" in example_url else "?"
+        localized_url = f"{example_url}{separator}lang={normalize_language(language)}"
+        rows.insert(0, [InlineKeyboardButton(text=view_label, url=localized_url)])
     rows.append(
         [
             InlineKeyboardButton(

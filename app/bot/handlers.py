@@ -84,7 +84,13 @@ from app.services.ai import (
     AssistantDecision,
     local_message_decision,
 )
-from app.services.localization import normalize_language, step_prompt, text
+from app.services.localization import (
+    PORTFOLIO_SECTION_LABELS,
+    PORTFOLIO_SECTION_PROMPTS,
+    normalize_language,
+    step_prompt,
+    text,
+)
 from app.services.portfolio import PortfolioDeploymentError, deploy_to_netlify, render_portfolio
 from app.services.resume_flow import (
     STEP_BY_KEY,
@@ -442,7 +448,7 @@ async def coming_soon_callback(callback: CallbackQuery, session: AsyncSession) -
                 text("portfolio_example", user.language_code),
             )
             await callback.message.answer(
-                "Namuna tushunarlimi, tayyormisiz?",
+                text("portfolio_ready_prompt", user.language_code),
                 reply_markup=portfolio_ready_keyboard(
                     user.language_code, get_settings().portfolio_example_url.strip()
                 ),
@@ -490,18 +496,7 @@ async def portfolio_template_callback(callback: CallbackQuery, session: AsyncSes
     await callback.answer()
     if callback.message:
         await callback.message.answer(
-            {
-                "uz": "Portfolio’da qaysi kategoriyalarni qo‘shmoqchisiz? Tanlangan kategoriyalar "
-                "professional portfolio tartibida navbatma-navbat to‘ldiriladi:",
-                "en": (
-                    "Which categories would you like to add to your portfolio? Questions "
-                    "will follow a professional portfolio order:"
-                ),
-                "ru": (
-                    "Какие категории добавить в портфолио? Вопросы будут заданы "
-                    "в профессиональном порядке:"
-                ),
-            }[normalize_language(user.language_code)],
+            text("portfolio_sections_intro", user.language_code),
             reply_markup=portfolio_sections_keyboard(user.language_code, []),
         )
 
@@ -522,62 +517,12 @@ _PORTFOLIO_SECTION_ORDER = (
 )
 
 
-_PORTFOLIO_SECTION_PROMPTS = {
-    "profile": "Profile: ism-familiya, kasbiy lavozim va qisqa tagline yozing.",
-    "about": "About: tajribangiz, yo‘nalishingiz va maqsadingiz haqida 2–4 jumla yozing.",
-    "skills": "Skills: asosiy ko‘nikmalaringizni vergul bilan ajrating.",
-    "experience": "Experience: ish joyi, lavozim va natijalarni yozing (har biri yangi qatorda).",
-    "education": "Education: ta’lim muassasasi, yo‘nalish va yillarni yozing.",
-    "contact": "Contact: email, telefon va joylashuvingizni yozing.",
-    "projects": "Projects: loyiha nomi, nima qilgani va GitHub/live demo linkini yozing.",
-    "certificates": "Certificates: sertifikat nomi, tashkilot va linkini yozing.",
-    "publications": "Publications: maqola yoki nashr nomi va linkini yozing.",
-    "languages": "Languages: til va darajani yozing (masalan: English — B2).",
-    "links": "Links & Profiles: GitHub, LinkedIn, Telegram yoki shaxsiy saytingiz linklarini "
-    "yozing.",
-    "achievements": "Achievements / Vlog: yutuq yoki vlog nomi, tavsifi va rasm/video "
-    "linkini yozing.",
-}
-
-_PORTFOLIO_PROMPTS = {
-    "uz": {
-        "profile": "Profil: ism-familiya, kasbiy lavozim va qisqa tagline yozing.",
-        "about": "Men haqimda: tajriba, yo‘nalish va maqsad haqida 2–4 jumla yozing.",
-        "skills": "Ko‘nikmalar: asosiy ko‘nikmalarni vergul bilan ajrating.",
-        "experience": "Ish tajribasi: ish joyi, lavozim va natijalarni yozing.",
-        "education": "Ta’lim: muassasa, yo‘nalish va yillarni yozing.",
-        "contact": "Kontakt: email, telefon va joylashuvni yozing.",
-        "projects": "Loyihalar: nomi, tavsifi, GitHub/live demo linkini yozing.",
-        "certificates": "Sertifikatlar: nomi, tashkilot va linkini yozing.",
-        "publications": "Nashrlar: maqola nomi va linkini yozing.",
-        "languages": "Tillar: til va darajani yozing.",
-        "links": "Havolalar: GitHub, LinkedIn va boshqa profillar linkini yozing.",
-        "achievements": "Yutuqlar/Vlog: nomi, tavsifi va rasm/video linkini yozing.",
-    },
-    "en": _PORTFOLIO_SECTION_PROMPTS,
-    "ru": {
-        "profile": "Профиль: напишите имя, профессию и короткий слоган.",
-        "about": "Обо мне: напишите о своём опыте, направлении и целях в 2–4 предложениях.",
-        "skills": "Навыки: перечислите основные навыки через запятую.",
-        "experience": "Опыт: укажите компанию, должность и результаты.",
-        "education": "Образование: укажите учебное заведение, направление и годы.",
-        "contact": "Контакты: укажите email, телефон и город.",
-        "projects": "Проекты: название, описание и ссылку GitHub/live demo.",
-        "certificates": "Сертификаты: название, организацию и ссылку.",
-        "publications": "Публикации: название статьи и ссылку.",
-        "languages": "Языки: укажите язык и уровень.",
-        "links": "Ссылки: добавьте GitHub, LinkedIn и другие профили.",
-        "achievements": "Достижения/Влог: название, описание и ссылку на фото/видео.",
-    },
-}
-
-
 @router.callback_query(F.data.startswith("portfolio-section:"))
 async def portfolio_section_callback(callback: CallbackQuery, session: AsyncSession) -> None:
     if callback.data is None:
         return
     section = callback.data.rsplit(":", 1)[-1]
-    if section not in _PORTFOLIO_SECTION_PROMPTS:
+    if section not in _PORTFOLIO_SECTION_ORDER:
         return
     user = await _user(session, callback.from_user)
     draft = await get_current_resume(session, user.id)
@@ -601,7 +546,7 @@ async def portfolio_section_callback(callback: CallbackQuery, session: AsyncSess
         data_updates={"portfolio_selected_sections": selected},
     )
     await callback.answer()
-    if callback.message:
+    if isinstance(callback.message, Message):
         await callback.message.edit_reply_markup(
             reply_markup=portfolio_sections_keyboard(user.language_code, selected)
         )
@@ -618,7 +563,7 @@ async def portfolio_finish_callback(callback: CallbackQuery, session: AsyncSessi
     selected_set = set(selected)
     selected = [code for code in _PORTFOLIO_SECTION_ORDER if code in selected_set]
     if not selected:
-        await callback.answer("Avval kamida bitta bo‘limni tanlang.", show_alert=True)
+        await callback.answer(text("portfolio_select_section", user.language_code), show_alert=True)
         return
     section = selected[0]
     draft = await update_draft_flow(
@@ -631,7 +576,7 @@ async def portfolio_finish_callback(callback: CallbackQuery, session: AsyncSessi
     await callback.answer()
     if callback.message:
         await callback.message.answer(
-            _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][section],
+            PORTFOLIO_SECTION_PROMPTS[normalize_language(user.language_code)][section],
             reply_markup=portfolio_step_keyboard(user.language_code),
         )
 
@@ -653,7 +598,7 @@ async def portfolio_back_callback(callback: CallbackQuery, session: AsyncSession
     if target == "example":
         await callback.message.answer(text("portfolio_example", user.language_code))
         await callback.message.answer(
-            "Namuna tushunarlimi, tayyormisiz?",
+            text("portfolio_ready_prompt", user.language_code),
             reply_markup=portfolio_ready_keyboard(
                 user.language_code, get_settings().portfolio_example_url.strip()
             ),
@@ -673,7 +618,8 @@ async def portfolio_back_callback(callback: CallbackQuery, session: AsyncSession
         return
     if target == "review":
         await update_draft_flow(session, draft, status="review", current_step="portfolio_sections")
-        await _send_preview(callback.message, draft.data, user.language_code)
+        if isinstance(callback.message, Message):
+            await _send_preview(callback.message, draft.data, user.language_code)
         return
     if target == "last":
         selected_set = {str(item) for item in draft.data.get("portfolio_selected_sections", [])}
@@ -693,7 +639,7 @@ async def portfolio_back_callback(callback: CallbackQuery, session: AsyncSession
             },
         )
         await callback.message.answer(
-            _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][last_section],
+            PORTFOLIO_SECTION_PROMPTS[normalize_language(user.language_code)][last_section],
             reply_markup=portfolio_step_keyboard(user.language_code),
         )
         return
@@ -711,7 +657,7 @@ async def portfolio_back_callback(callback: CallbackQuery, session: AsyncSession
             current_step="portfolio_sections",
         )
         await callback.message.answer(
-            "Portfolio’da qaysi kategoriyalarni qo‘shmoqchisiz?",
+            text("portfolio_sections_intro", user.language_code),
             reply_markup=portfolio_sections_keyboard(user.language_code, selected),
         )
         return
@@ -728,7 +674,7 @@ async def portfolio_back_callback(callback: CallbackQuery, session: AsyncSession
         },
     )
     await callback.message.answer(
-        _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][previous_section],
+        PORTFOLIO_SECTION_PROMPTS[normalize_language(user.language_code)][previous_section],
         reply_markup=portfolio_step_keyboard(user.language_code),
     )
 
@@ -1118,13 +1064,16 @@ async def collect_text(
         except TelegramBadRequest:
             logger.warning("Could not delete the one-time Netlify token message")
         site_name = f"hujjat-portfolio-{message.from_user.id}"
-        status_message = await message.answer("Portfolio Netlify’ga joylanmoqda...")
+        status_message = await message.answer(text("portfolio_deploying", user.language_code))
         try:
-            url = await deploy_to_netlify(render_portfolio(draft.data), token, site_name)
+            url = await deploy_to_netlify(
+                render_portfolio(draft.data, user.language_code), token, site_name
+            )
             await mark_completed(session, draft)
-            await status_message.edit_text(f"✅ Portfolio tayyor va Netlify’da joylandi:\n{url}")
+            await status_message.edit_text(text("portfolio_deployed", user.language_code, url=url))
         except PortfolioDeploymentError as error:
-            await status_message.edit_text(f"❌ {error}\nQayta Netlify token yuboring.")
+            logger.warning("Portfolio deployment failed: %s", error)
+            await status_message.edit_text(text("portfolio_deploy_failed", user.language_code))
         return
     if (
         draft is not None
@@ -1159,7 +1108,14 @@ async def collect_text(
             custom = [
                 item for item in custom if not isinstance(item, dict) or item.get("key") != section
             ]
-            custom.append({"key": section, "title": section.title(), "content": raw_answer.strip()})
+            locale = normalize_language(user.language_code)
+            custom.append(
+                {
+                    "key": section,
+                    "title": PORTFOLIO_SECTION_LABELS[locale][section],
+                    "content": raw_answer.strip(),
+                }
+            )
             updates = {"portfolio_sections": custom}
         selected = [str(item) for item in draft.data.get("portfolio_selected_sections", [])]
         selected_set = set(selected)
@@ -1178,9 +1134,9 @@ async def collect_text(
                 status="collecting",
                 current_step="portfolio_section",
             )
+            prompt = PORTFOLIO_SECTION_PROMPTS[normalize_language(user.language_code)][next_section]
             await message.answer(
-                "Bo‘lim saqlandi. Keyingi bo‘lim:\n\n"
-                + _PORTFOLIO_PROMPTS[normalize_language(user.language_code)][next_section],
+                text("portfolio_section_saved", user.language_code, prompt=prompt),
                 reply_markup=portfolio_step_keyboard(user.language_code),
             )
         else:
@@ -2013,10 +1969,7 @@ async def approve_callback(callback: CallbackQuery, session: AsyncSession) -> No
             session, draft, status="portfolio_token", current_step="portfolio_token"
         )
         await callback.message.answer(
-            "Netlify Personal Access Token yuboring. Token saqlanmaydi; faqat bir martalik "
-            "deploy uchun ishlatiladi.\n"
-            "Tokenni Netlify → User settings → Applications → Personal access tokens "
-            "bo‘limidan oling.",
+            text("portfolio_token_prompt", user.language_code),
             reply_markup=portfolio_token_keyboard(user.language_code),
         )
         return

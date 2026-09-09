@@ -4,6 +4,127 @@ Language = Literal["uz", "en", "ru"]
 
 SUPPORTED_LANGUAGES: tuple[Language, ...] = ("uz", "en", "ru")
 
+PORTFOLIO_SECTION_LABELS: dict[Language, dict[str, str]] = {
+    "uz": {
+        "profile": "Profil",
+        "about": "Men haqimda",
+        "skills": "Ko‘nikmalar",
+        "experience": "Ish tajribasi",
+        "education": "Ta’lim",
+        "projects": "Loyihalar",
+        "certificates": "Sertifikatlar",
+        "publications": "Nashrlar",
+        "languages": "Tillar",
+        "achievements": "Yutuqlar / Vlog",
+        "links": "Havolalar va profillar",
+        "contact": "Bog‘lanish",
+    },
+    "en": {
+        "profile": "Profile",
+        "about": "About",
+        "skills": "Skills",
+        "experience": "Experience",
+        "education": "Education",
+        "projects": "Projects",
+        "certificates": "Certificates",
+        "publications": "Publications",
+        "languages": "Languages",
+        "achievements": "Achievements / Vlog",
+        "links": "Links & Profiles",
+        "contact": "Contact",
+    },
+    "ru": {
+        "profile": "Профиль",
+        "about": "Обо мне",
+        "skills": "Навыки",
+        "experience": "Опыт работы",
+        "education": "Образование",
+        "projects": "Проекты",
+        "certificates": "Сертификаты",
+        "publications": "Публикации",
+        "languages": "Языки",
+        "achievements": "Достижения / Влог",
+        "links": "Ссылки и профили",
+        "contact": "Контакты",
+    },
+}
+
+PORTFOLIO_SECTION_PROMPTS: dict[Language, dict[str, str]] = {
+    "uz": {
+        "profile": (
+            "Profil: ism-familiya, kasbiy lavozim va qisqa shiorni alohida qatorlarda "
+            "yozing."
+        ),
+        "about": "Men haqimda: tajriba, yo‘nalish va maqsadingizni 2–4 jumlada yozing.",
+        "skills": "Ko‘nikmalar: asosiy ko‘nikmalaringizni vergul bilan ajrating.",
+        "experience": (
+            "Ish tajribasi: kompaniya, lavozim, davr va natijalarni yozing. Har bir ish "
+            "joyini yangi qatordan boshlang."
+        ),
+        "education": "Ta’lim: muassasa, yo‘nalish va o‘qigan yillaringizni yozing.",
+        "projects": (
+            "Loyihalar: nomi, natijasi, texnologiyalar va GitHub yoki demo havolasini "
+            "yozing."
+        ),
+        "certificates": "Sertifikatlar: nomi, bergan tashkilot, yil va havolasini yozing.",
+        "publications": "Nashrlar: maqola yoki nashr nomi, qisqa tavsifi va havolasini yozing.",
+        "languages": "Tillar: har bir til va darajani yozing (masalan: Ingliz tili — C1).",
+        "achievements": "Yutuqlar / Vlog: nomi, natijasi va rasm yoki video havolasini yozing.",
+        "links": (
+            "Havolalar va profillar: GitHub, LinkedIn, Telegram yoki shaxsiy sayt "
+            "havolalarini yozing."
+        ),
+        "contact": "Bog‘lanish: email, telefon va joylashuvingizni alohida qatorlarda yozing.",
+    },
+    "en": {
+        "profile": (
+            "Profile: enter your full name, professional title, and a short tagline on "
+            "separate lines."
+        ),
+        "about": "About: describe your experience, focus, and goals in 2–4 sentences.",
+        "skills": "Skills: separate your core skills with commas.",
+        "experience": (
+            "Experience: include company, role, dates, and outcomes. Start each position "
+            "on a new line."
+        ),
+        "education": "Education: include the institution, field of study, and dates.",
+        "projects": (
+            "Projects: include the name, impact, technologies, and a GitHub or live-demo "
+            "link."
+        ),
+        "certificates": "Certificates: include the credential, issuer, year, and link.",
+        "publications": "Publications: include the title, a short description, and link.",
+        "languages": (
+            "Languages: enter each language and proficiency level (for example: "
+            "English — C1)."
+        ),
+        "achievements": (
+            "Achievements / Vlog: include the title, result, and an image or video link."
+        ),
+        "links": "Links & Profiles: add GitHub, LinkedIn, Telegram, or your personal website.",
+        "contact": "Contact: enter your email, phone number, and location on separate lines.",
+    },
+    "ru": {
+        "profile": "Профиль: укажите имя, профессию и короткий слоган на отдельных строках.",
+        "about": "Обо мне: опишите опыт, специализацию и цели в 2–4 предложениях.",
+        "skills": "Навыки: перечислите основные навыки через запятую.",
+        "experience": (
+            "Опыт работы: укажите компанию, должность, период и результаты. Каждое место "
+            "работы начните с новой строки."
+        ),
+        "education": "Образование: укажите учебное заведение, специальность и годы обучения.",
+        "projects": "Проекты: укажите название, результат, технологии и ссылку на GitHub или демо.",
+        "certificates": "Сертификаты: укажите название, организацию, год и ссылку.",
+        "publications": "Публикации: укажите название, краткое описание и ссылку.",
+        "languages": "Языки: укажите каждый язык и уровень владения (например: Английский — C1).",
+        "achievements": (
+            "Достижения / Влог: укажите название, результат и ссылку на фото или видео."
+        ),
+        "links": "Ссылки и профили: добавьте GitHub, LinkedIn, Telegram или личный сайт.",
+        "contact": "Контакты: укажите email, телефон и город на отдельных строках.",
+    },
+}
+
 
 def normalize_language(language: str | None) -> Language:
     code = (language or "uz").lower().split("-", 1)[0]
@@ -40,22 +161,15 @@ TEXTS: dict[str, dict[Language, str]] = {
     "portfolio_example": {
         "uz": (
             "✨ <b>Professional dasturchi portfolio namunasi</b>\n\n"
-            "<b>PROFILE</b> · Ali Valiyev — Software Engineer\n"
-            "<b>ABOUT</b> · Ishonchli va qulay raqamli mahsulotlar yarataman.\n"
-            "<b>SKILLS</b> · Python · FastAPI · React · PostgreSQL · Cloud\n"
-            "<b>EXPERIENCE</b> · Senior Engineer — Nexus Labs\n"
-            "<b>EDUCATION</b> · BSc Software Engineering\n"
-            "<b>PROJECTS</b> · Analytics Platform · Fintech App · CLI Toolkit\n"
-            "<b>CERTIFICATES</b> · AWS Solutions Architect\n"
-            "<b>PUBLICATIONS</b> · Resilient systems maqolasi\n"
-            "<b>LANGUAGES</b> · O‘zbek · English C1 · Русский B2\n"
-            "<b>ACHIEVEMENTS / VLOG</b> · Open Source Impact Award\n"
-            "<b>LINKS</b> · GitHub · LinkedIn · Telegram\n"
-            "<b>CONTACT</b> · ali@example.com\n\n"
+            "<b>Alex Morgan</b> — mahsulotga yo‘naltirilgan Software Engineer.\n\n"
+            "Profil · Men haqimda · Ko‘nikmalar · Ish tajribasi · Ta’lim\n"
+            "Loyihalar · Sertifikatlar · Nashrlar · Tillar · Yutuqlar / Vlog\n"
+            "Havolalar va profillar · Bog‘lanish\n\n"
             "Quyidagi tugma orqali to‘liq professional saytni ko‘ring."
         ),
         "en": (
             "✨ <b>Professional developer portfolio example</b>\n\n"
+            "<b>Alex Morgan</b> — a product-minded Software Engineer.\n\n"
             "Profile · About · Skills · Experience · Education · Projects\n"
             "Certificates · Publications · Languages · Achievements / Vlog\n"
             "Links &amp; Profiles · Contact\n\n"
@@ -63,7 +177,8 @@ TEXTS: dict[str, dict[Language, str]] = {
         ),
         "ru": (
             "✨ <b>Пример профессионального портфолио разработчика</b>\n\n"
-            "Профиль · Обо мне · Навыки · Опыт · Образование · Проекты\n"
+            "<b>Alex Morgan</b> — Software Engineer с продуктовым мышлением.\n\n"
+            "Профиль · Обо мне · Навыки · Опыт работы · Образование · Проекты\n"
             "Сертификаты · Публикации · Языки · Достижения / Влог\n"
             "Ссылки и профили · Контакты\n\n"
             "Полный профессиональный сайт доступен по кнопке ниже."
@@ -73,6 +188,67 @@ TEXTS: dict[str, dict[Language, str]] = {
         "uz": "Endi portfolio dizaynini tanlang:",
         "en": "Now choose a portfolio design:",
         "ru": "Теперь выберите дизайн портфолио:",
+    },
+    "portfolio_ready_prompt": {
+        "uz": "Namuna tushunarlimi? Portfolio yaratishni boshlaymizmi?",
+        "en": "Is the example clear? Shall we start building your portfolio?",
+        "ru": "Пример понятен? Начнём создавать ваше портфолио?",
+    },
+    "portfolio_sections_intro": {
+        "uz": (
+            "Portfolio uchun kerakli kategoriyalarni tanlang. Savollar professional "
+            "tartibda navbatma-navbat beriladi:"
+        ),
+        "en": (
+            "Choose the categories for your portfolio. Questions will follow in a "
+            "professional order:"
+        ),
+        "ru": (
+            "Выберите категории для портфолио. Вопросы будут заданы поочерёдно в "
+            "профессиональном порядке:"
+        ),
+    },
+    "portfolio_select_section": {
+        "uz": "Avval kamida bitta kategoriya tanlang.",
+        "en": "Select at least one category first.",
+        "ru": "Сначала выберите хотя бы одну категорию.",
+    },
+    "portfolio_section_saved": {
+        "uz": "✅ Bo‘lim saqlandi. Keyingi bo‘lim:\n\n{prompt}",
+        "en": "✅ Section saved. Next section:\n\n{prompt}",
+        "ru": "✅ Раздел сохранён. Следующий раздел:\n\n{prompt}",
+    },
+    "portfolio_token_prompt": {
+        "uz": (
+            "Netlify Personal Access Token yuboring. Token saqlanmaydi va faqat bir "
+            "martalik joylash uchun ishlatiladi.\n\nTokenni Netlify → User settings → "
+            "Applications → Personal access tokens bo‘limidan oling."
+        ),
+        "en": (
+            "Send your Netlify Personal Access Token. It is not stored and is used only "
+            "for this one-time deployment.\n\nGet it from Netlify → User settings → "
+            "Applications → Personal access tokens."
+        ),
+        "ru": (
+            "Отправьте Netlify Personal Access Token. Он не сохраняется и используется "
+            "только для этой разовой публикации.\n\nПолучить токен можно в Netlify → User "
+            "settings → Applications → Personal access tokens."
+        ),
+    },
+    "portfolio_deploying": {
+        "uz": "Portfolio Netlify’ga joylanmoqda…",
+        "en": "Publishing your portfolio to Netlify…",
+        "ru": "Публикуем портфолио на Netlify…",
+    },
+    "portfolio_deployed": {
+        "uz": "✅ Portfolio tayyor va Netlify’ga joylandi:\n{url}",
+        "en": "✅ Your portfolio is ready and live on Netlify:\n{url}",
+        "ru": "✅ Портфолио готово и опубликовано на Netlify:\n{url}",
+    },
+    "portfolio_deploy_failed": {
+        "uz": "❌ Portfolio joylanmadi. Tokenni tekshirib, qayta yuboring.",
+        "en": "❌ The portfolio could not be published. Check the token and send it again.",
+        "ru": "❌ Не удалось опубликовать портфолио. Проверьте токен и отправьте его снова.",
     },
     "choose_template": {
         "uz": "CV uchun shablonni tanlang:",

@@ -5,6 +5,7 @@ from html import escape
 
 from app.services.localization import (
     OBJECTIVE_LABELS,
+    PORTFOLIO_SECTION_LABELS,
     PREVIEW_LABELS,
     normalize_language,
     text,
@@ -913,7 +914,7 @@ def build_preview(data: dict[str, object], language: str = "uz") -> str:
     ):
         if key in data:
             sections.append(f"<b>{labels[key]}:</b>\n{joined(values)}")
-    sections.extend(_custom_preview_sections(data))
+    sections.extend(_custom_preview_sections(data, language))
     return "\n\n".join(sections)
 
 
@@ -947,19 +948,23 @@ def _build_objective_preview(data: dict[str, object], language: str) -> str:
             sections.append(f"<b>{labels[label_key]}:</b>\n{rendered}")
         else:
             sections.append(f"<b>{labels[label_key]}:</b> {escape(str(value)) or '—'}")
-    sections.extend(_custom_preview_sections(data))
+    sections.extend(_custom_preview_sections(data, language))
     return "\n\n".join(sections)
 
 
-def _custom_preview_sections(data: dict[str, object]) -> list[str]:
-    raw_sections = data.get("custom_sections", [])
-    if not isinstance(raw_sections, list):
-        return []
+def _custom_preview_sections(data: dict[str, object], language: str = "uz") -> list[str]:
+    raw_sections: list[object] = []
+    for key in ("custom_sections", "portfolio_sections"):
+        value = data.get(key, [])
+        if isinstance(value, list):
+            raw_sections.extend(value)
+    portfolio_labels = PORTFOLIO_SECTION_LABELS[normalize_language(language)]
     sections: list[str] = []
     for item in raw_sections:
         if not isinstance(item, dict):
             continue
-        title = escape(str(item.get("title", "")))
+        section_key = str(item.get("key", ""))
+        title = escape(portfolio_labels.get(section_key, str(item.get("title", ""))))
         content = escape(str(item.get("content", "")))
         if title and content:
             sections.append(f"<b>{title}:</b>\n{content}")

@@ -148,6 +148,13 @@ def test_bot_copy_uses_selected_language() -> None:
         "Некорректный email. Пример: ali@example.com"
     )
     assert "Review your resume information" in build_preview({"full_name": "Ali"}, "en")
+    assert text("portfolio_ready_prompt", "ru") == (
+        "Пример понятен? Начнём создавать ваше портфолио?"
+    )
+    assert "Namuna" not in text("portfolio_ready_prompt", "ru")
+    assert "Section saved" in text(
+        "portfolio_section_saved", "en", prompt="Projects"
+    )
 
 
 def test_skill_suggestions_are_renderable_for_job_title() -> None:
@@ -172,7 +179,11 @@ def test_docx_headings_use_selected_language(tmp_path) -> None:
 
 def test_portfolio_flow_has_example_link_order_and_back_buttons() -> None:
     ready = portfolio_ready_keyboard("uz", "https://demo.netlify.app")
-    assert ready.inline_keyboard[0][0].url == "https://demo.netlify.app"
+    assert ready.inline_keyboard[0][0].url == "https://demo.netlify.app?lang=uz"
+    assert (
+        portfolio_ready_keyboard("ru", "https://demo.netlify.app?ref=bot").inline_keyboard[0][0].url
+        == "https://demo.netlify.app?ref=bot&lang=ru"
+    )
     assert ready.inline_keyboard[-1][0].callback_data == "portfolio:back:documents"
     assert portfolio_template_keyboard("uz").inline_keyboard[-1][0].callback_data == (
         "portfolio:back:example"
@@ -226,7 +237,8 @@ def test_generated_portfolio_renders_all_supported_content() -> None:
                 {"key": "achievements", "title": "Achievements", "content": "Award"},
                 {"key": "links", "title": "Links", "content": "https://github.com/example"},
             ],
-        }
+        },
+        "en",
     )
     for value in (
         "Ali &amp; Vali",
@@ -247,3 +259,30 @@ def test_generated_portfolio_renders_all_supported_content() -> None:
     assert 'href="https://example.com/demo"' in document
     assert 'href="https://github.com/example"' in document
     assert "grid-template-columns:1fr" in document
+
+
+def test_generated_portfolio_uses_selected_language_everywhere() -> None:
+    data = {
+        "full_name": "Alex Morgan",
+        "job_title": "Инженер-программист",
+        "summary": "Создаю надёжные продукты.",
+        "skills": ["Python"],
+        "experience": ["Nexus Labs"],
+        "education": ["ТУИТ"],
+        "languages": ["Русский — C2"],
+        "portfolio_sections": [
+            {"key": "projects", "title": "Projects", "content": "Pulse"},
+            {"key": "achievements", "title": "Achievements", "content": "Award"},
+        ],
+    }
+    russian = render_portfolio(data, "ru")
+    assert '<html lang="ru">' in russian
+    for value in ("Обо мне", "Навыки", "Опыт работы", "Образование", "Языки", "Проекты"):
+        assert value in russian
+    assert "Достижения / Влог" in russian
+    assert "Built with care" not in russian
+
+    uzbek = render_portfolio(data, "uz")
+    assert '<html lang="uz">' in uzbek
+    assert "Men haqimda" in uzbek
+    assert "Bog‘lanish" in uzbek
