@@ -64,6 +64,9 @@ const localeExtras = {
   en: { langEn: "English", levelProfessional: "Professional", publicationMeta: "PUBLICATION · 08 MIN", achievementMeta: "2025 · COMMUNITY", tagTransformation: "Transformation · SaaS", tagFintech: "Fintech · Launch", tagOperations: "Operations · Scale" },
   ru: { langEn: "Английский", levelProfessional: "Профессиональный", publicationMeta: "ПУБЛИКАЦИЯ · 08 МИН", achievementMeta: "2025 · СООБЩЕСТВО", tagTransformation: "Трансформация · SaaS", tagFintech: "Fintech · Запуск", tagOperations: "Операции · Масштабирование" }
 };
+Object.assign(localeExtras.uz, { experienceSection: "Ish tajribasi", educationSection: "Ta’lim", educationIntro: "Kasbiy qarashlarimni shakllantirgan ta’lim va sertifikatlar." });
+Object.assign(localeExtras.en, { experienceSection: "Experience", educationSection: "Education", educationIntro: "The education and credentials behind my professional practice." });
+Object.assign(localeExtras.ru, { experienceSection: "Опыт работы", educationSection: "Образование", educationIntro: "Образование и сертификаты, сформировавшие мой профессиональный подход." });
 
 function applyLanguage(language, updateUrl = false) {
   const locale = supportedLanguages.includes(language) ? language : "uz";
