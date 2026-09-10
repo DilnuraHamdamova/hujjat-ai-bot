@@ -276,10 +276,12 @@ async def deploy_to_netlify(document: str, token: str, site_name: str) -> str:
                         raise PortfolioDeploymentError("Netlify deploy yakunlanmadi.")
                 await asyncio.sleep(2)
             url = (
-                deploy.get("deploy_ssl_url")
-                or deploy.get("ssl_url")
-                or site.get("ssl_url")
+                # Deploy-preview URLs may be protected by Netlify team access
+                # control. The site URL is the public, shareable address.
+                site.get("ssl_url")
                 or site.get("url")
+                or deploy.get("ssl_url")
+                or deploy.get("deploy_ssl_url")
             )
             if not url:
                 raise PortfolioDeploymentError("Netlify javobida sayt manzili topilmadi.")
