@@ -1154,22 +1154,11 @@ async def collect_text(
     user = await _user(session, message.from_user)
     draft = await get_current_resume(session, user.id)
     if draft is not None and draft.status == "portfolio_token":
-        token = raw_answer.strip()
-        try:
-            await message.delete()
-        except TelegramBadRequest:
-            logger.warning("Could not delete the one-time Netlify token message")
-        site_name = f"hujjat-portfolio-{message.from_user.id}"
-        status_message = await message.answer(text("portfolio_deploying", user.language_code))
-        try:
-            url = await deploy_to_netlify(
-                render_portfolio(draft.data, user.language_code), token, site_name
-            )
-            await mark_completed(session, draft)
-            await status_message.edit_text(text("portfolio_deployed", user.language_code, url=url))
-        except PortfolioDeploymentError as error:
-            logger.warning("Portfolio deployment failed: %s", error)
-            await status_message.edit_text(text("portfolio_deploy_failed", user.language_code))
+        # Migrate drafts from the old user-token flow without ever echoing
+        # generated HTML or asking the user for credentials again.
+        await _publish_portfolio(
+            message, session, draft, user.language_code, str(message.from_user.id)
+        )
         return
     if (
         draft is not None
