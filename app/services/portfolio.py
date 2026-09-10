@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import io
 import mimetypes
 import re
@@ -246,14 +247,26 @@ async def deploy_to_netlify(document: str, token: str, site_name: str) -> str:
                     "Netlify site yaratmadi. Token yoki sayt nomini tekshiring."
                 )
             site = site_response.json()
+            payload = document.encode("utf-8")
+            digest = hashlib.sha1(payload).hexdigest()
             deploy_response = await client.post(
                 f"https://api.netlify.com/api/v1/sites/{site['id']}/deploys",
-                headers={**headers, "Content-Type": "application/zip"},
-                content=portfolio_zip(document),
+                headers={**headers, "Content-Type": "application/json"},
+                json={"files": {"index.html": digest}},
             )
             if deploy_response.is_error:
                 raise PortfolioDeploymentError("Netlify deploy xatosi yuz berdi.")
             deploy = deploy_response.json()
+            deploy_id = deploy.get("id")
+            if not deploy_id:
+                raise PortfolioDeploymentError("Netlify deploy ID qaytarmadi.")
+            upload_response = await client.put(
+                f"https://api.netlify.com/api/v1/deploys/{deploy_id}/files/index.html",
+                headers={**headers, "Content-Type": "text/html; charset=UTF-8"},
+                content=payload,
+            )
+            if upload_response.is_error:
+                raise PortfolioDeploymentError("Portfolio faylini Netlify’ga yuklab bo‘lmadi.")
             url = (
                 deploy.get("ssl_url")
                 or deploy.get("deploy_ssl_url")
