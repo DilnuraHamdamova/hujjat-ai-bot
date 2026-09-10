@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import base64
+import asyncio
 import hashlib
 import io
 import mimetypes
@@ -278,6 +279,24 @@ async def deploy_to_netlify(document: str, token: str, site_name: str) -> str:
             )
             if not url:
                 raise PortfolioDeploymentError("Netlify javobida sayt manzili topilmadi.")
-            return str(url)
+            # Do not return a broken link: wait for Netlify post-processing and
+            # verify that the public endpoint serves HTML (not the source as text).
+            public_url = str(url)
+            for attempt in range(8):
+                try:
+                    page = await client.get(public_url, follow_redirects=True)
+                    content_type = page.headers.get("content-type", "").lower()
+                    body_start = page.text.lstrip().lower()[:128]
+                    if page.is_success and "text/html" in content_type and (
+                        "<!doctype html" in body_start or "<html" in body_start
+                    ):
+                        return public_url
+                except httpx.HTTPError:
+                    pass
+                if attempt < 7:
+                    await asyncio.sleep(2)
+            raise PortfolioDeploymentError(
+                "Netlify deploy yakunlandi, lekin sayt HTML sifatida ochilmadi. Qayta urinib ko‘ring."
+            )
     except httpx.HTTPError as error:
         raise PortfolioDeploymentError("Netlify bilan bog‘lanib bo‘lmadi.") from error
