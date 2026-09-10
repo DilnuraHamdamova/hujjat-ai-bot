@@ -129,6 +129,30 @@ def _step_prompt_with_example(step_key: str, language: str) -> str:
     return f"{prompt}\n({label}: {example})"
 
 
+_PORTFOLIO_EXAMPLES = {
+    "profile": {"uz": "Men loyiha menejeriman; murakkab ishlarni aniq natijaga olib boraman.", "en": "I am a project manager turning complex work into clear outcomes.", "ru": "Я менеджер проектов, превращаю сложные задачи в понятный результат."},
+    "about": {"uz": "Strategiya, jamoa va mijoz ehtiyojlarini bir yo‘nalishga birlashtiraman.", "en": "I align strategy, teams, and customer needs.", "ru": "Я объединяю стратегию, команду и потребности клиентов."},
+    "skills": {"uz": "Strategik rejalash, Agile, muzokara, risk boshqaruvi", "en": "Strategy, Agile, negotiation, risk management", "ru": "Стратегия, Agile, переговоры, управление рисками"},
+    "experience": {"uz": "2022–hozir — Nova Group, loyiha menejeri\n2020–2022 — StartUp, coordinator", "en": "2022–present — Nova Group, Project Manager\n2020–2022 — StartUp, Coordinator", "ru": "2022–н.в. — Nova Group, менеджер проектов\n2020–2022 — StartUp, координатор"},
+    "education": {"uz": "2018–2022 — TDIU, Biznes boshqaruvi", "en": "2018–2022 — TSUE, Business Administration", "ru": "2018–2022 — ТГЭУ, бизнес-администрирование"},
+    "projects": {"uz": "Northstar — jarayonni avtomatlashtirish va 31% tezroq yetkazib berish.", "en": "Northstar — process automation with 31% faster delivery.", "ru": "Northstar — автоматизация процессов и доставка на 31% быстрее."},
+    "certificates": {"uz": "PMP — 2024; Professional Scrum Master — 2023", "en": "PMP — 2024; Professional Scrum Master — 2023", "ru": "PMP — 2024; Professional Scrum Master — 2023"},
+    "publications": {"uz": "Resilient jamoalarni boshqarish — 8 daqiqalik maqola", "en": "Leading resilient teams — an 8-minute article", "ru": "Управление устойчивыми командами — статья на 8 минут"},
+    "languages": {"uz": "O‘zbek — ona tili; Ingliz — C1; Rus — B2", "en": "Uzbek — native; English — C1; Russian — B2", "ru": "Узбекский — родной; Английский — C1; Русский — B2"},
+    "achievements": {"uz": "Open Source Impact Award — 4 800+ GitHub yulduzi", "en": "Open Source Impact Award — 4,800+ GitHub stars", "ru": "Open Source Impact Award — более 4 800 звёзд GitHub"},
+    "links": {"uz": "linkedin.com/in/madina-karimova\ngithub.com/madina", "en": "linkedin.com/in/madina-karimova\ngithub.com/madina", "ru": "linkedin.com/in/madina-karimova\ngithub.com/madina"},
+    "contact": {"uz": "madina@example.com\n+998 90 123 45 67\nToshkent", "en": "madina@example.com\n+998 90 123 45 67\nTashkent", "ru": "madina@example.com\n+998 90 123 45 67\nТашкент"},
+}
+
+
+def _portfolio_prompt_with_example(section: str, language: str) -> str:
+    locale = normalize_language(language)
+    prompt = PORTFOLIO_SECTION_PROMPTS[locale][section]
+    example = _PORTFOLIO_EXAMPLES.get(section, {}).get(locale)
+    label = {"uz": "Misol", "en": "Example", "ru": "Пример"}[locale]
+    return f"{prompt}\n({label}: {example})" if example else prompt
+
+
 async def _user(session: AsyncSession, telegram_user: TelegramUser) -> User:
     return await get_or_create_user(
         session,
@@ -470,6 +494,22 @@ async def skip_portfolio_photo_callback(callback: CallbackQuery, session: AsyncS
         )
 
 
+@router.callback_query(F.data == "objective-photo:skip")
+async def skip_objective_photo_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    """Allow an objective/resume to continue without a portrait."""
+    user = await _user(session, callback.from_user)
+    draft = await get_current_resume(session, user.id)
+    if draft is None or draft.status != "awaiting_photo" or draft.data.get("document_type") != "objective":
+        await callback.answer(text("old_button", user.language_code), show_alert=True)
+        return
+    await update_draft_flow(
+        session, draft, remove_keys=("photo_path",), status="collecting", current_step="full_name"
+    )
+    await callback.answer()
+    if isinstance(callback.message, Message):
+        await _send_step(callback.message, draft.current_step, user.language_code)
+
+
 @router.callback_query(F.data.in_({"document:recommendation", "document:portfolio"}))
 async def coming_soon_callback(callback: CallbackQuery, session: AsyncSession) -> None:
     user = await _user(session, callback.from_user)
@@ -522,7 +562,9 @@ async def portfolio_template_callback(callback: CallbackQuery, session: AsyncSes
     await update_draft_flow(
         session,
         draft,
-        data_updates={"portfolio_template": template_code.rsplit("_", 1)[0]},
+        # Keep the complete variant code (e.g. modern_2), not only the family,
+        # so each of the three previews renders as its own design.
+        data_updates={"portfolio_template": template_code},
         status="awaiting_photo",
         current_step="portfolio_sections",
     )
@@ -1221,7 +1263,7 @@ async def collect_text(
                 status="collecting",
                 current_step="portfolio_section",
             )
-            prompt = PORTFOLIO_SECTION_PROMPTS[normalize_language(user.language_code)][next_section]
+            prompt = _portfolio_prompt_with_example(next_section, user.language_code)
             await message.answer(
                 text("portfolio_section_saved", user.language_code, prompt=prompt),
                 reply_markup=portfolio_step_keyboard(user.language_code),

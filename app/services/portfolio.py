@@ -189,6 +189,14 @@ def render_portfolio(data: dict[str, object], language: str = "uz") -> str:
         "creative": ("#ff5f9e", "#ffdf65", "#130913", "#281225", "#fff4fb", "#cbb0c6"),
         "developer": ("#b8ff5a", "#6d7cff", "#07100a", "#101d14", "#eff8f0", "#a4b3a7"),
     }
+    # Three selectable visual variants per family. Keeping these palettes
+    # server-side guarantees the chosen preview is reflected in the export.
+    themes.update({
+        "minimal_1": themes["minimal"], "minimal_2": ("#e8e2d8", "#d96b3b", "#f8f5ef", "#fffdf8", "#201d19", "#756f67"), "minimal_3": ("#d9e7e4", "#176b68", "#f3faf8", "#ffffff", "#102c2b", "#5f7775"),
+        "modern_1": themes["modern"], "modern_2": ("#ff7a59", "#ffd166", "#120d1b", "#21162b", "#fff8f2", "#c6b4c8"), "modern_3": ("#42d6c5", "#8e7dff", "#071419", "#10242b", "#effffc", "#9bb8bb"),
+        "creative_1": themes["creative"], "creative_2": ("#00c2ff", "#ffdf65", "#0b1220", "#14253a", "#f0f8ff", "#9db2c7"), "creative_3": ("#f77f00", "#eae2b7", "#1d1110", "#30201b", "#fff7e8", "#c9ad93"),
+        "developer_1": themes["developer"], "developer_2": ("#7cffcb", "#a78bfa", "#090d16", "#111827", "#f2f6ff", "#9ba9bd"), "developer_3": ("#f97316", "#22d3ee", "#0b1014", "#16232b", "#f5fbff", "#9eb1b8"),
+    })
     accent, accent_two, background, surface, foreground, muted = themes.get(
         str(data.get("portfolio_template")), themes["modern"]
     )
