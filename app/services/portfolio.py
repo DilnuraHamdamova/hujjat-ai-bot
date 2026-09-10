@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import base64
 import asyncio
-import hashlib
 import io
 import mimetypes
 import re
@@ -248,29 +247,15 @@ async def deploy_to_netlify(document: str, token: str, site_name: str) -> str:
                     "Netlify site yaratmadi. Token yoki sayt nomini tekshiring."
                 )
             site = site_response.json()
-            payload = document.encode("utf-8")
-            digest = hashlib.sha1(payload).hexdigest()
+            payload = portfolio_zip(document)
             deploy_response = await client.post(
                 f"https://api.netlify.com/api/v1/sites/{site['id']}/deploys",
-                headers={**headers, "Content-Type": "application/json"},
-                # Netlify's file-digest API expects deploy paths to start with '/'.
-                json={"files": {"/index.html": digest}},
+                headers={**headers, "Content-Type": "application/zip"},
+                content=payload,
             )
             if deploy_response.is_error:
                 raise PortfolioDeploymentError("Netlify deploy xatosi yuz berdi.")
             deploy = deploy_response.json()
-            deploy_id = deploy.get("id")
-            if not deploy_id:
-                raise PortfolioDeploymentError("Netlify deploy ID qaytarmadi.")
-            upload_response = await client.put(
-                f"https://api.netlify.com/api/v1/deploys/{deploy_id}/files/index.html",
-                # The API infers the final MIME type from the path.  Sending HTML
-                # as octets avoids it being stored/served as a plain-text blob.
-                headers={**headers, "Content-Type": "application/octet-stream"},
-                content=payload,
-            )
-            if upload_response.is_error:
-                raise PortfolioDeploymentError("Portfolio faylini Netlify’ga yuklab bo‘lmadi.")
             url = (
                 deploy.get("ssl_url")
                 or deploy.get("deploy_ssl_url")
