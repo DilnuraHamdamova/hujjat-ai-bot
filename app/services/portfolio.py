@@ -256,9 +256,28 @@ async def deploy_to_netlify(document: str, token: str, site_name: str) -> str:
             if deploy_response.is_error:
                 raise PortfolioDeploymentError("Netlify deploy xatosi yuz berdi.")
             deploy = deploy_response.json()
+            deploy_id = deploy.get("id")
+            if not deploy_id:
+                raise PortfolioDeploymentError("Netlify deploy ID qaytarmadi.")
+            # ZIP deploys are asynchronous. Wait for the deploy itself to become
+            # ready before probing the public URL; otherwise the old/placeholder
+            # response can be mistaken for a broken HTML page.
+            for _ in range(30):
+                state_response = await client.get(
+                    f"https://api.netlify.com/api/v1/sites/{site['id']}/deploys/{deploy_id}",
+                    headers=headers,
+                )
+                if state_response.is_success:
+                    state = str(state_response.json().get("state", ""))
+                    if state in {"ready", "uploaded"}:
+                        deploy = state_response.json()
+                        break
+                    if state in {"error", "failed"}:
+                        raise PortfolioDeploymentError("Netlify deploy yakunlanmadi.")
+                await asyncio.sleep(2)
             url = (
-                deploy.get("ssl_url")
-                or deploy.get("deploy_ssl_url")
+                deploy.get("deploy_ssl_url")
+                or deploy.get("ssl_url")
                 or site.get("ssl_url")
                 or site.get("url")
             )
