@@ -229,6 +229,9 @@ def portfolio_zip(document: str) -> bytes:
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("index.html", document)
+        # Explicitly set the response MIME type. This prevents accounts with
+        # restrictive Netlify defaults from serving index.html as text/plain.
+        archive.writestr("_headers", "/*\n  Content-Type: text/html; charset=UTF-8\n")
     return output.getvalue()
 
 
