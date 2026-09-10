@@ -65,7 +65,12 @@ def render_portfolio(data: dict[str, object], language: str = "uz") -> str:
     labels = PORTFOLIO_SECTION_LABELS[locale]
 
     def esc(key: str, default: str = "") -> str:
-        return escape(str(data.get(key, default) or "").strip())
+        value = str(data.get(key, default) or "").strip()
+        if key == "full_name":
+            # Normalize user input such as "hamdamova dilnura" for a polished
+            # public portfolio while preserving the original stored data.
+            value = " ".join(part[:1].upper() + part[1:] for part in value.split())
+        return escape(value)
 
     def rich(value: object) -> str:
         raw = str(value or "").strip()

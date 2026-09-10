@@ -58,10 +58,11 @@ PORTFOLIO_SECTION_PROMPTS: dict[Language, dict[str, str]] = {
         "about": "Men haqimda: tajriba, yo‘nalish va maqsadingizni 2–4 jumlada yozing.",
         "skills": "Ko‘nikmalar: asosiy ko‘nikmalaringizni vergul bilan ajrating.",
         "experience": (
-            "Ish tajribasi: kompaniya, lavozim, davr va natijalarni yozing. Har bir ish "
-            "joyini yangi qatordan boshlang."
+            "Ish tajribasi: ish joyi/muassasa, lavozim va ishlagan davrni yozing. "
+            "Bir nechta ish joyi bo‘lsa har birini yangi qatordan kiriting. "
+            "Vazifalar ixtiyoriy — vazifa bo‘lmasa ‘-’ yuboring."
         ),
-        "education": "Ta’lim: muassasa, yo‘nalish va o‘qigan yillaringizni yozing.",
+        "education": "Ta’lim: maktab yoki universitet nomi, yo‘nalish va o‘qigan yillaringizni yozing. Bir nechta ta’limni yangi qatorlarda kiriting.",
         "projects": (
             "Loyihalar: nomi, natijasi, texnologiyalar va GitHub yoki demo havolasini "
             "yozing."

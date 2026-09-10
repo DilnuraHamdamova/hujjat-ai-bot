@@ -665,7 +665,7 @@ async def portfolio_finish_callback(callback: CallbackQuery, session: AsyncSessi
     await callback.answer()
     if callback.message:
         await callback.message.answer(
-            PORTFOLIO_SECTION_PROMPTS[normalize_language(user.language_code)][section],
+            _portfolio_prompt_with_example(section, user.language_code),
             reply_markup=portfolio_step_keyboard(user.language_code),
         )
 
