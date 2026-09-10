@@ -5,6 +5,7 @@ import shutil
 import tempfile
 from html import escape
 from pathlib import Path
+from uuid import uuid4
 
 from aiogram import Bot, F, Router
 from aiogram.enums import ChatAction
@@ -768,7 +769,8 @@ async def _publish_portfolio(
     status_message = await message.answer(text("portfolio_deploying", language))
     try:
         if server_token:
-            url = await deploy_to_netlify(document, server_token, f"hujjat-portfolio-{site_suffix}")
+            site_name = f"hujjat-portfolio-{site_suffix}-{uuid4().hex[:8]}"
+            url = await deploy_to_netlify(document, server_token, site_name)
             await mark_completed(session, draft)
             await status_message.edit_text(text("portfolio_deployed", language, url=url))
             return
