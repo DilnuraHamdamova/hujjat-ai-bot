@@ -252,7 +252,8 @@ async def deploy_to_netlify(document: str, token: str, site_name: str) -> str:
             deploy_response = await client.post(
                 f"https://api.netlify.com/api/v1/sites/{site['id']}/deploys",
                 headers={**headers, "Content-Type": "application/json"},
-                json={"files": {"index.html": digest}},
+                # Netlify's file-digest API expects deploy paths to start with '/'.
+                json={"files": {"/index.html": digest}},
             )
             if deploy_response.is_error:
                 raise PortfolioDeploymentError("Netlify deploy xatosi yuz berdi.")
@@ -262,7 +263,9 @@ async def deploy_to_netlify(document: str, token: str, site_name: str) -> str:
                 raise PortfolioDeploymentError("Netlify deploy ID qaytarmadi.")
             upload_response = await client.put(
                 f"https://api.netlify.com/api/v1/deploys/{deploy_id}/files/index.html",
-                headers={**headers, "Content-Type": "text/html; charset=UTF-8"},
+                # The API infers the final MIME type from the path.  Sending HTML
+                # as octets avoids it being stored/served as a plain-text blob.
+                headers={**headers, "Content-Type": "application/octet-stream"},
                 content=payload,
             )
             if upload_response.is_error:
