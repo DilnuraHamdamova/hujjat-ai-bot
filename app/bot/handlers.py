@@ -153,6 +153,14 @@ def _portfolio_prompt_with_example(section: str, language: str) -> str:
     return f"{prompt}\n({label}: {example})" if example else prompt
 
 
+def _project_stage_keyboard(language: str, stage: str) -> InlineKeyboardMarkup:
+    locale = normalize_language(language)
+    labels = {"uz": "⏭ O‘tkazib yuborish", "en": "⏭ Skip", "ru": "⏭ Пропустить"}
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text=labels[locale], callback_data=f"portfolio-project-skip:{stage}")
+    ]])
+
+
 async def _user(session: AsyncSession, telegram_user: TelegramUser) -> User:
     return await get_or_create_user(
         session,
@@ -639,6 +647,32 @@ async def portfolio_section_callback(callback: CallbackQuery, session: AsyncSess
         await callback.message.edit_reply_markup(
             reply_markup=portfolio_sections_keyboard(user.language_code, selected)
         )
+
+
+@router.callback_query(F.data.startswith("portfolio-project-skip:"))
+async def portfolio_project_skip_callback(callback: CallbackQuery, session: AsyncSession) -> None:
+    user = await _user(session, callback.from_user)
+    draft = await get_current_resume(session, user.id)
+    if draft is None or draft.data.get("document_type") != "portfolio":
+        await callback.answer(text("start_first", user.language_code), show_alert=True)
+        return
+    stage = callback.data.rsplit(":", 1)[-1] if callback.data else ""
+    pending = dict(draft.data.get("pending_project", {}) or {})
+    if stage == "tasks":
+        pending["tasks"] = ""
+        next_stage, prompt = "technologies", {"uz": "Qaysi texnologiyalardan foydalanildi?", "en": "Which technologies did you use?", "ru": "Какие технологии использовались?"}[normalize_language(user.language_code)]
+    elif stage == "technologies":
+        pending["technologies"] = ""
+        next_stage, prompt = "link", {"uz": "Loyiha havolasini yuboring (ixtiyoriy):", "en": "Send the project link (optional):", "ru": "Отправьте ссылку на проект (необязательно):"}[normalize_language(user.language_code)]
+    else:
+        project_line = " — ".join(str(pending.get(k, "")).strip() for k in ("name", "tasks", "technologies", "link") if str(pending.get(k, "")).strip())
+        await update_draft_flow(session, draft, data_updates={"projects": list(draft.data.get("projects", [])) + [project_line]}, remove_keys=("pending_project", "project_stage"))
+        await callback.answer()
+        return
+    await update_draft_flow(session, draft, data_updates={"pending_project": pending, "project_stage": next_stage})
+    await callback.answer()
+    if isinstance(callback.message, Message):
+        await callback.message.answer(prompt, reply_markup=_project_stage_keyboard(user.language_code, next_stage))
 
 
 @router.callback_query(F.data == "portfolio:start")
@@ -1211,6 +1245,34 @@ async def collect_text(
     ):
         section = str(draft.data.get("portfolio_active_section", ""))
         if not section:
+            return
+        if section == "projects":
+            stage = str(draft.data.get("project_stage", "name"))
+            pending = dict(draft.data.get("pending_project", {}) or {})
+            if stage == "name":
+                pending = {"name": raw_answer.strip()}
+                stage, prompt = "tasks", {
+                    "uz": "Bajargan vazifalaringizni yozing:", "en": "Describe your responsibilities:", "ru": "Опишите выполненные задачи:"
+                }[normalize_language(user.language_code)]
+            elif stage == "tasks":
+                pending["tasks"] = raw_answer.strip()
+                stage, prompt = "technologies", {
+                    "uz": "Qaysi texnologiyalardan foydalanildi?", "en": "Which technologies did you use?", "ru": "Какие технологии использовались?"
+                }[normalize_language(user.language_code)]
+            elif stage == "technologies":
+                pending["technologies"] = raw_answer.strip()
+                stage, prompt = "link", {
+                    "uz": "Loyiha havolasini yuboring (ixtiyoriy):", "en": "Send the project link (optional):", "ru": "Отправьте ссылку на проект (необязательно):"
+                }[normalize_language(user.language_code)]
+            else:
+                pending["link"] = raw_answer.strip() if raw_answer.strip() != "-" else ""
+                project_line = " — ".join(str(pending.get(k, "")).strip() for k in ("name", "tasks", "technologies", "link") if str(pending.get(k, "")).strip())
+                updates = {"projects": list(draft.data.get("projects", [])) + [project_line]}
+                await update_draft_flow(session, draft, data_updates=updates, remove_keys=("pending_project", "project_stage"))
+                await message.answer({"uz": "✅ Loyiha qo‘shildi. Yana loyiha kiritish uchun nomini yuboring yoki - yuboring.", "en": "✅ Project added. Send another project name or - to continue.", "ru": "✅ Проект добавлен. Отправьте название следующего или - для продолжения."}[normalize_language(user.language_code)], reply_markup=portfolio_step_keyboard(user.language_code))
+                return
+            await update_draft_flow(session, draft, data_updates={"pending_project": pending, "project_stage": stage})
+            await message.answer(prompt, reply_markup=_project_stage_keyboard(user.language_code, stage))
             return
         updates: dict[str, object] = {}
         lines = [line.strip() for line in raw_answer.splitlines() if line.strip()]
